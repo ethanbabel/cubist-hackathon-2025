@@ -142,4 +142,3 @@ Historical Analysis: View how congestion has changed over days, weeks, or months
 Time Series Graphs to show traffic density over time.
 Bar/Column Charts for comparing congestion levels across multiple zones.
 Heatmaps to visualize traffic intensity within zones at specific times.
->>>>>>> main
