@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## Modeling Toll Pricing for Congestion Management
 
 **Objective**
