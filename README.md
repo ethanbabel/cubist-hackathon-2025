@@ -53,7 +53,7 @@ Where:
 
 This produces the characteristic S-curve shown below:
 
-![alt text](congestion_vs_toll.png)
+![congestion vs toll plot](congestion_vs_toll.png)
 
 This functional form is backed by empirical elasticity studies (e.g., Small & Verhoef, The Economics of Urban Transportation, 2007, etc). 
 
