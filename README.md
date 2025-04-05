@@ -35,11 +35,10 @@ Key Components
 We tuned:
 - λ = 1e6 (penalty weight)
 - threshold = 0.3
-- Learning rate, architecture (2-layer MLP with Tanh), and toll output bounds ([2.25, 18]).
 
 This incentivizes setting the lowest possible tolls while avoiding excess congestion.
 
-**Congestion Response Modeling**
+**Toll Response Congestion Modeling**
 
 Economic theory and empirical studies show that demand for urban travel is price elastic, meaning that as tolls rise, fewer vehicles enter, reducing congestion. The relationship is nonlinear, especially near behavioral tipping points.
 We used a differentiable sigmoid-like function to model this shape:
@@ -49,11 +48,13 @@ We used a differentiable sigmoid-like function to model this shape:
 
 Where:
 - base is the max congestion if tolls are free.
-- θ is the inflection point (typical sensitivity threshold).
+- θ is the inflection point. 
 - k controls steepness.
 
 This produces the characteristic S-curve shown below:
+
 ![alt text](congestion_vs_toll.png)
+
 This functional form is backed by empirical elasticity studies (e.g., Small & Verhoef, The Economics of Urban Transportation, 2007, etc). 
 
 **Training Setup**
