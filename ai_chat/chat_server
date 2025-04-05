@@ -8,7 +8,7 @@ class MyVanna(ChromaDB_VectorStore, GoogleGeminiChat):
         ChromaDB_VectorStore.__init__(self, config=config)
         GoogleGeminiChat.__init__(self, config=config)
 
-vn = MyVanna(config={'api_key': os.getenv("GOOGLE_API_KEY"), 'model': 'gemini-1.5-pro'})
+vn = MyVanna(config={'api_key': os.getenv("GOOGLE_API_KEY"), 'model': 'gemini-2.0-flash'})
 vn.connect_to_sqlite(url='mta_chat.sqlite')
 
 
