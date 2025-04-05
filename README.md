@@ -17,6 +17,7 @@ Congestion score is defined as follows:
 where the current flow rate and free flow rate (of traffic) are pulled from a real-time traffic API (TomTom). Therefore
 - 0.0 = completely free-flowing traffic
 - 1.0 = total gridlock
+
 Global congestion is measured as the average of sampled CRZ locations. Local congestion is computed per-entry-point. 
 
 **Modeling Approach**
@@ -37,3 +38,28 @@ We tuned:
 - Learning rate, architecture (2-layer MLP with Tanh), and toll output bounds ([2.25, 18]).
 
 This incentivizes setting the lowest possible tolls while avoiding excess congestion.
+
+**Congestion Response Modeling**
+
+Economic theory and empirical studies show that demand for urban travel is price elastic, meaning that as tolls rise, fewer vehicles enter, reducing congestion. The relationship is nonlinear, especially near behavioral tipping points.
+We used a differentiable sigmoid-like function to model this shape:
+```math
+\text{congestion} = \frac{\text{base}}{1 + \exp(k \cdot (\text{toll} - \theta))}
+```
+
+Where:
+- base is the max congestion if tolls are free.
+- θ is the inflection point (typical sensitivity threshold).
+- k controls steepness.
+
+This produces the characteristic S-curve shown below:
+![alt text](congestion_vs_toll.png)
+This functional form is backed by empirical elasticity studies (e.g., Small & Verhoef, The Economics of Urban Transportation, 2007, etc). 
+
+**Training Setup**
+- Training Data: 10,000 random samples of (local_congestion, global_congestion) ∈ [0, 1]
+- Target: Find tolls that minimize the loss while keeping predicted congestion under a threshold (e.g., 0.3)
+- Penalty Weight: λ = 1,000,000
+- Toll Range: Learned model outputs are mapped via tanh to a [2.25, 18] dollar range
+
+The congestion model is fixed and does not learn — it merely simulates driver behavior in response to tolling.
