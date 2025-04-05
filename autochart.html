@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoQuery</title>
+    <link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/@finos/perspective-workspace@3.4.0/dist/css/themes.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+
+        .navbar {
+            background-color: #2c2c2c;
+            padding: 1rem;
+            text-align: left;
+        }
+
+        .navbar a {
+            color: #aaa;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            margin-right: 1rem;
+        }
+
+        .navbar a:hover,
+        .navbar a.active {
+            color: #fff;
+            border-bottom: 2px solid #338dcd;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 60px);
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background-color: #2c2c2c;
+            border-radius: 8px;
+        }
+
+        #questionInput {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3c3c3c;
+            color: #fff;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #338dcd;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #2674b0;
+        }
+
+        .recommendation {
+            background-color: #2c2c2c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        #graphContainer {
+            flex-grow: 1;
+            background-color: #2c2c2c;
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        perspective-workspace {
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        .loading {
+            display: none;
+            color: #338dcd;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html">Dashboard</a>
+        <a href="mapviz.html">Map Viz</a>
+        <a href="chatbot.html">AutoQuery</a>
+        <a class="active" href="autochart.html">AutoChart</a>
+        <a href="#data">Smart Pricing</a>
+    </nav>
+
+    <div class="container">
+        <div class="input-container">
+            <input type="text" id="questionInput" placeholder="Ask a question about the traffic data...">
+            <button onclick="window.askQuestion()">Generate Chart</button>
+            <span class="loading" id="loadingIndicator">Generating chart...</span>
+        </div>
+        <div id="recommendation" class="recommendation"></div>
+        <div id="graphContainer">
+            <perspective-workspace id="workspace"></perspective-workspace>
+        </div>
+    </div>
+
+    <script type="module" src="autochart.js"></script>
+</body>
+</html>
