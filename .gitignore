@@ -1,3 +1,15 @@
 # Ignore data (file size too large)
 MTA_Congestion_Relief_Zone_Vehicle_Entries__Beginning_2025_20250404.csv
 
+# Ignore .env files
+*.env
+
+# Ignore Python cache files
+__pycache__/
+
+# Ignore Jupyter Notebook 
+*.ipynb
+
+# Ignore png files
+*.png
+
