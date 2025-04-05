@@ -9,11 +9,12 @@ The goal of the congestion model is to determine optimal congestion tolls for ea
 The model is designed to set the lowest tolls possible while maintaining congestion below a defined threshold (e.g., 0.3). This ensures traffic flow and accessibility without unnecessarily overpricing entry.
 
 **What Is the Congestion Score?**
+
 Congestion score is defined as follows:
 ```math
-\begin{center}
-   congestion = 1 - \frac{\text{currentFlowRate}}{\text{freeFlowRate}}
-\end{center}
+
+congestion = 1 - \frac{\text{currentFlowRate}}{\text{freeFlowRate}}
+
 ```
 	•	0.0 = completely free-flowing traffic
 	•	1.0 = total gridlock
