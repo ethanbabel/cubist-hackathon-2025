@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.3.0/ol.css">
+        <script src="https://cdn.jsdelivr.net/npm/ol@v7.3.0/dist/ol.js"></script>
+        
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                background-color: #000;
+                color: #fff;
+            }
+            
+            #map {
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+            }
+            
+            .title {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                z-index: 1000;
+                background-color: rgba(0, 0, 0, 0.7);
+                padding: 5px 10px;
+                border-radius: 4px;
+                color: #fff;
+            }
+            
+            .legend {
+                position: absolute;
+                bottom: 30px;
+                right: 10px;
+                z-index: 1000;
+                background-color: rgba(0, 0, 0, 0.7);
+                padding: 10px;
+                border-radius: 4px;
+                color: #fff;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+            
+            .legend ul {
+                padding-left: 20px;
+                margin: 5px 0;
+            }
+            
+            .legend li {
+                margin-bottom: 5px;
+            }
+            
+            .data-summary {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                z-index: 1000;
+                background-color: rgba(0, 0, 0, 0.7);
+                padding: 10px;
+                border-radius: 4px;
+                color: #fff;
+                max-width: 300px;
+            }
+            
+            .region-name {
+                color: #fff;
+                text-shadow: 1px 1px 2px #000;
+            }
+            
+            .loading {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                background-color: rgba(0, 0, 0, 0.8);
+                padding: 20px;
+                border-radius: 8px;
+                color: #fff;
+                display: none;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="map"></div>
+        <div class="title">
+            <h2>NYC Traffic Congestion Map</h2>
+        </div>
+        <div class="legend">
+            <h3>Traffic Points</h3>
+            <div id="locations"></div>
+        </div>
+        <div class="data-summary">
+            <h3>Traffic Summary</h3>
+            <div id="data-stats">Loading data...</div>
+            <button id="load-data" style="margin-top: 10px; padding: 5px 10px;">Load Sample Data</button>
+        </div>
+        <div class="loading" id="loading-indicator">
+            Loading data sample...
+        </div>
+        
+        <script>
+            // Create a map with dark style
+            const map = new ol.Map({
+                target: 'map',
+                layers: [
+                    new ol.layer.Tile({
+                        source: new ol.source.XYZ({
+                            url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                            attributions: '© <a href="https://carto.com/">CARTO</a>, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        })
+                    })
+                ],
+                view: new ol.View({
+                    center: ol.proj.fromLonLat([-74.0060, 40.7128]), // NYC center
+                    zoom: 12
+                })
+            });
+            
+            // Define NYC traffic regions with their coordinates and assign different colors
+            const colors = [
+                'rgba(0, 255, 255, 0.8)',    // Cyan
+                'rgba(255, 0, 255, 0.8)',    // Magenta
+                'rgba(255, 165, 0, 0.8)',    // Orange
+                'rgba(0, 128, 255, 0.8)',    // Blue
+                'rgba(255, 0, 128, 0.8)',    // Pink
+                'rgba(128, 255, 0, 0.8)',    // Green
+                'rgba(255, 128, 0, 0.8)',    // Orange-Red
+                'rgba(128, 0, 255, 0.8)',    // Purple
+                'rgba(0, 255, 128, 0.8)',    // Mint
+                'rgba(255, 255, 0, 0.8)',    // Yellow
+                'rgba(0, 255, 0, 0.8)',      // Lime
+                'rgba(255, 0, 0, 0.8)',      // Red
+                'rgba(0, 128, 128, 0.8)',    // Teal
+                'rgba(128, 0, 128, 0.8)',    // Deep Purple
+                'rgba(255, 192, 203, 0.8)'   // Pink
+            ];
+            
+            const regions = [
+                { name: "Brooklyn", coordinates: [-73.9442, 40.6782], color: colors[0] },
+                { name: "Brooklyn Bridge", coordinates: [-73.9969, 40.7061], color: colors[1] },
+                { name: "Manhattan Bridge", coordinates: [-73.9919, 40.7074], color: colors[2] },
+                { name: "East 60th St", coordinates: [-73.9644, 40.7615], color: colors[3] },
+                { name: "FDR Drive", coordinates: [-73.9715, 40.7520], color: colors[4] },
+                { name: "FDR Drive at 60th St", coordinates: [-73.9588, 40.7616], color: colors[5] },
+                { name: "Holland Tunnel", coordinates: [-74.0089, 40.7277], color: colors[6] },
+                { name: "Hugh L. Carey Tunnel", coordinates: [-74.0145, 40.6901], color: colors[7] },
+                { name: "Lincoln Tunnel", coordinates: [-74.0111, 40.7588], color: colors[8] },
+                { name: "Queens", coordinates: [-73.7949, 40.7282], color: colors[9] },
+                { name: "Queens Midtown Tunnel", coordinates: [-73.9245, 40.7431], color: colors[10] },
+                { name: "Queensboro Bridge", coordinates: [-73.9540, 40.7568], color: colors[11] },
+                { name: "West 60th St", coordinates: [-73.9859, 40.7708], color: colors[12] },
+                { name: "West Side Highway", coordinates: [-73.9868, 40.7863], color: colors[13] },
+                { name: "West Side Highway at 60th St", coordinates: [-73.9903, 40.7723], color: colors[14] }
+            ];
+            
+            // Function to create "clustered" points around a region to simulate traffic density
+            function createPointsAroundRegion(region, count, maxRadius = 0.01) {
+                const points = [];
+                const [centerLon, centerLat] = region.coordinates;
+                
+                for (let i = 0; i < count; i++) {
+                    // Random angle and distance from center
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * maxRadius;
+                    
+                    // Convert polar to cartesian coordinates
+                    const lon = centerLon + radius * Math.cos(angle);
+                    const lat = centerLat + radius * Math.sin(angle);
+                    
+                    points.push(ol.proj.fromLonLat([lon, lat]));
+                }
+                
+                return points;
+            }
+            
+            // Create region clusters
+            regions.forEach(region => {
+                // Create 100-200 points around each region
+                const numPoints = 50 + Math.floor(Math.random() * 150);
+                const points = createPointsAroundRegion(region, numPoints);
+                
+                // Create point features
+                const features = points.map(point => {
+                    return new ol.Feature({
+                        geometry: new ol.geom.Point(point),
+                        regionName: region.name
+                    });
+                });
+                
+                // Create a vector source with the features
+                const vectorSource = new ol.source.Vector({
+                    features: features
+                });
+                
+                // Style for the points
+                const pointStyle = new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 3,
+                        fill: new ol.style.Fill({
+                            color: region.color
+                        })
+                    })
+                });
+                
+                // Create a vector layer for the region
+                const vectorLayer = new ol.layer.Vector({
+                    source: vectorSource,
+                    style: pointStyle
+                });
+                
+                // Add the vector layer to the map
+                map.addLayer(vectorLayer);
+            });
+            
+            // Add main points as markers with text labels
+            const markerFeatures = regions.map(region => {
+                const feature = new ol.Feature({
+                    geometry: new ol.geom.Point(
+                        ol.proj.fromLonLat(region.coordinates)
+                    ),
+                    name: region.name,
+                    color: region.color
+                });
+                
+                // Set a style for the feature
+                feature.setStyle(new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 6,
+                        fill: new ol.style.Fill({
+                            color: region.color
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#fff',
+                            width: 2
+                        })
+                    }),
+                    text: new ol.style.Text({
+                        text: region.name,
+                        offsetY: -15,
+                        fill: new ol.style.Fill({
+                            color: '#fff'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#000',
+                            width: 3
+                        })
+                    })
+                }));
+                
+                return feature;
+            });
+            
+            // Create a vector source and layer for the markers
+            const markerSource = new ol.source.Vector({
+                features: markerFeatures
+            });
+            
+            const markerLayer = new ol.layer.Vector({
+                source: markerSource,
+                zIndex: 100 // Keep markers on top
+            });
+            
+            // Add the marker layer to the map
+            map.addLayer(markerLayer);
+            
+            // Populate the legend
+            const locationsList = document.getElementById('locations');
+            regions.forEach(region => {
+                const item = document.createElement('div');
+                item.innerHTML = `
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: ${region.color}; margin-right: 5px; border-radius: 50%;"></span>
+                    <span>${region.name}</span>
+                `;
+                locationsList.appendChild(item);
+            });
+            
+            // Add popup functionality
+            const popup = new ol.Overlay({
+                element: document.createElement('div'),
+                positioning: 'bottom-center',
+                stopEvent: false
+            });
+            
+            popup.getElement().className = 'ol-popup';
+            popup.getElement().innerHTML = '<div class="popup-content"></div>';
+            map.addOverlay(popup);
+            
+            // Display popup on hover
+            map.on('pointermove', function(evt) {
+                const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
+                    return feature;
+                });
+                
+                if (feature && feature.get('name')) { // Only show for named features (markers)
+                    const coordinates = feature.getGeometry().getCoordinates();
+                    popup.setPosition(coordinates);
+                    popup.getElement().querySelector('.popup-content').innerHTML = feature.get('name');
+                    popup.getElement().style.display = 'block';
+                    popup.getElement().style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                    popup.getElement().style.color = '#fff';
+                    popup.getElement().style.padding = '5px';
+                    popup.getElement().style.borderRadius = '4px';
+                    popup.getElement().style.boxShadow = '0 1px 4px rgba(0,0,0,0.2)';
+                } else {
+                    popup.getElement().style.display = 'none';
+                }
+            });
+            
+            // Function to load a small sample of data and display statistics
+            async function loadSampleData() {
+                try {
+                    document.getElementById('loading-indicator').style.display = 'block';
+                    
+                    // Simulate loading and processing a small data sample
+                    const response = await fetch('mta_data.csv');
+                    const text = await response.text();
+                    
+                    // Just get the header and first 100 lines
+                    const lines = text.split('\n');
+                    const header = lines[0].split(',');
+                    const sampleData = lines.slice(1, 101);
+                    
+                    // Find indexes of relevant columns
+                    const regionIdx = header.findIndex(col => col.includes('Detection Region'));
+                    const vehicleIdx = header.findIndex(col => col.includes('Vehicle Class'));
+                    const entriesIdx = header.findIndex(col => col.includes('CRZ Entries'));
+                    
+                    // Process the sample data
+                    const regionData = {};
+                    
+                    sampleData.forEach(line => {
+                        const columns = line.split(',');
+                        if (columns.length <= Math.max(regionIdx, vehicleIdx, entriesIdx)) return;
+                        
+                        const region = columns[regionIdx].replace(/"/g, '').trim();
+                        const entries = parseInt(columns[entriesIdx]) || 0;
+                        
+                        if (!regionData[region]) {
+                            regionData[region] = {
+                                totalEntries: 0,
+                                count: 0
+                            };
+                        }
+                        
+                        regionData[region].totalEntries += entries;
+                        regionData[region].count++;
+                    });
+                    
+                    // Calculate averages and prepare display
+                    let statsHtml = '<table style="width:100%; border-collapse: collapse;">';
+                    statsHtml += '<tr><th style="text-align:left; padding-bottom:5px;">Region</th><th style="text-align:right; padding-bottom:5px;">Avg Entries</th></tr>';
+                    
+                    Object.keys(regionData).sort().forEach(region => {
+                        const avg = Math.round(regionData[region].totalEntries / regionData[region].count);
+                        statsHtml += `<tr>
+                            <td style="padding:3px 10px 3px 0;">${region}</td>
+                            <td style="text-align:right; padding:3px 0;">${avg}</td>
+                        </tr>`;
+                    });
+                    
+                    statsHtml += '</table>';
+                    document.getElementById('data-stats').innerHTML = statsHtml;
+                    
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    document.getElementById('data-stats').innerHTML = 'Error loading data. Please try again.';
+                } finally {
+                    document.getElementById('loading-indicator').style.display = 'none';
+                }
+            }
+            
+            // Attach event listener to the load data button
+            document.getElementById('load-data').addEventListener('click', loadSampleData);
+        </script>
+    </body>
+</html> 
