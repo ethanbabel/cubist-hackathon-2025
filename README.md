@@ -16,7 +16,7 @@ License
 
 ## Features 
 ### AI-Powered Data Querying:
-Utilize Vanna, an AI-driven chatbot, to ask natural language questions about congestion pricing, MTA-related traffic data, or any other relevant metrics. Vanna responds with relevant insights and answers in real-time.
+Utilize Vanna to ask natural language questions about congestion pricing, MTA-related traffic data, or any other relevant metrics. Vanna responds with relevant insights and answers in real-time.
 ### Interactive Data Visualizations:
 Leverage Perspective, a powerful data visualization library, to explore the data interactively. This includes dynamic tables, graphs, charts, and dashboards that can be customized and filtered based on user input.
 ### Zone Density Map:
