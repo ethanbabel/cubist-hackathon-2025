@@ -1,4 +1,30 @@
 Access our App Here: https://a309-2600-387-c-7016-00-1.ngrok-free.app
+
+## MTA Congestion Pricing Analysis and Visualization Tool
+
+This project integrates Vanna (an AI-powered query tool) and Perspective (a data visualization library) to analyze and visualize MTA congestion pricing data. Users can query detailed information about congestion pricing policies, traffic data, and related metrics, and explore the results in a rich, interactive format.
+
+## Table of Contents
+Features
+Setup Instructions
+Usage
+Data Visualization
+Interactive Map
+Graphs & Charts
+Contributing
+License
+
+## Features 
+### AI-Powered Data Querying:
+Utilize Vanna to ask natural language questions about congestion pricing, MTA-related traffic data, or any other relevant metrics. Vanna responds with relevant insights and answers in real-time.
+### Easy Auto-Charting:
+Ask natural language questions about traffic data and instantly get AI-generated, interactive charts and visualizations.
+### Interactive Data Visualizations:
+Leverage Perspective, a powerful data visualization library, to explore the data interactively. This includes dynamic tables, graphs, charts, and dashboards that can be customized and filtered based on user input.
+### Zone Density Map:
+Visualize traffic density across different MTA zones at various times. This provides an overview of traffic patterns and congestion in real-time.
+### Real-time Traffic Analysis:
+View real-time traffic trends and congestion levels across different MTA zones with interactive graphs.
 ## Modeling Toll Pricing for Congestion Management
 
 **Objective**
@@ -52,47 +78,9 @@ Where:
 - θ is the inflection point. 
 - k controls steepness.
 
-This produces the characteristic S-curve shown below:
-
-![congestion vs toll plot](congestion_vs_toll.png)
-
-This functional form is backed by empirical elasticity studies (e.g., Small & Verhoef, The Economics of Urban Transportation, 2007, etc). 
-
-**Training Setup**
-- Training Data: 10,000 random samples of (local_congestion, global_congestion) ∈ [0, 1]
-- Target: Find tolls that minimize the loss while keeping predicted congestion under a threshold (e.g., 0.3)
-- Penalty Weight: λ = 1,000,000
-- Toll Range: Learned model outputs are mapped via tanh to a [2.25, 18] dollar range
-
 The congestion model is fixed and does not learn — it merely simulates driver behavior in response to tolling.
 =======
 # cubist-hackathon-2025
-
-## MTA Congestion Pricing Analysis and Visualization Tool
-
-This project integrates Vanna (an AI-powered query tool) and Perspective (a data visualization library) to analyze and visualize MTA congestion pricing data. Users can query detailed information about congestion pricing policies, traffic data, and related metrics, and explore the results in a rich, interactive format.
-
-## Table of Contents
-Features
-Setup Instructions
-Usage
-Data Visualization
-Interactive Map
-Graphs & Charts
-Contributing
-License
-
-## Features 
-### AI-Powered Data Querying:
-Utilize Vanna to ask natural language questions about congestion pricing, MTA-related traffic data, or any other relevant metrics. Vanna responds with relevant insights and answers in real-time.
-### Easy Auto-Charting:
-Ask natural language questions about traffic data and instantly get AI-generated, interactive charts and visualizations.
-### Interactive Data Visualizations:
-Leverage Perspective, a powerful data visualization library, to explore the data interactively. This includes dynamic tables, graphs, charts, and dashboards that can be customized and filtered based on user input.
-### Zone Density Map:
-Visualize traffic density across different MTA zones at various times. This provides an overview of traffic patterns and congestion in real-time.
-### Real-time Traffic Analysis:
-View real-time traffic trends and congestion levels across different MTA zones with interactive graphs.
 
 ## Setup Instructions
 
