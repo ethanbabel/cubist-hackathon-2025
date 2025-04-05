@@ -123,7 +123,6 @@ async function askQuestion() {
     if (!question) return;
 
     loadingIndicator.style.display = 'inline';
-    recommendationDiv.style.display = 'none';
     
     try {
         const response = await fetch(API_URL, {
@@ -137,21 +136,14 @@ async function askQuestion() {
         const data = await response.json();
         
         if (response.ok) {
-            recommendationDiv.textContent = data.recommendation;
-            recommendationDiv.style.display = 'block';
-
             // Apply the new layout to the workspace
             if (data.layout) {
                 await workspace.restore(data.layout);
             }
         } else {
-            recommendationDiv.textContent = 'Error: ' + (data.error || 'Failed to get recommendation');
-            recommendationDiv.style.display = 'block';
-            console.error('Error:', data.error);
+            console.error('Error:', data.error || 'Failed to get recommendation');
         }
     } catch (error) {
-        recommendationDiv.textContent = 'Error: ' + error.message;
-        recommendationDiv.style.display = 'block';
         console.error('Error:', error);
     } finally {
         loadingIndicator.style.display = 'none';
