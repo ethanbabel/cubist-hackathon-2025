@@ -2,86 +2,66 @@
 <html>
     <head>
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+        <title>MTA Congestion Pricing Visualization</title>
         <link rel="preload" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/wasm/perspective-viewer.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" />
         <link rel="preload" href="https://cdn.jsdelivr.net/npm/@finos/perspective/dist/wasm/perspective-server.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" />
-        <link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/css/themes.css" />
-        <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.3/umd/index.min.js"></script>
-        <script type="module">
-            import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer@3.4.0/dist/cdn/perspective-viewer.js";
-            import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer-datagrid@3.4.0/dist/cdn/perspective-viewer-datagrid.js";
-            import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer-d3fc@3.4.0/dist/cdn/perspective-viewer-d3fc.js";
-            import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer-openlayers/dist/cdn/perspective-viewer-openlayers.js";
-
-            import { worker } from "https://cdn.jsdelivr.net/npm/@finos/perspective@3.4.0/dist/cdn/perspective.js";
-
-            const WORKER = await worker();
-            const URL = `https://data.sfgov.org/resource/5cei-gny5.csv?$limit=50000`;
-
-            async function get_evictions() {
-                const arrow = localStorage.getItem(URL);
-                if (arrow !== null) {
-                    console.log("Using cached data from localStorage");
-                    try {
-                        const buffer = fflate.strToU8(arrow, true);
-                        return await WORKER.table(fflate.decompressSync(buffer).buffer);
-                    } catch (e) {
-                        console.error("Can't load cached data", e);
-                        localStorage.clear();
-                    }
-                }
-
-                console.log("Downloading data from data.sfgov.org");
-                const resp = await fetch(
-                    URL
-                    // "5cei-gny5.csv"
-                    // "evictions.all.arrow"
-                );
-                const csv = await resp.text();
-                const table = await WORKER.table(csv);
-                (async () => {
-                    console.log("Caching data");
-                    const view = await table.view();
-                    const arrow = await view.to_arrow();
-                    try {
-                        const x = fflate.compressSync(new Uint8Array(arrow));
-                        const zipped = fflate.strFromU8(x, true);
-                        localStorage.setItem(URL, zipped);
-                    } catch (e) {
-                        console.error("Can't cache data from data.sfgov.org", e);
-                    }
-                })();
-
-                return table;
-            }
-
-            async function load() {
-                const el = document.getElementsByTagName("perspective-viewer")[0];
-
-                const evictions = get_evictions();
-                const layout_json = await fetch("layout.json");
-                const layout = await layout_json.json();
-                
-                el.load(await evictions);
-                el.restore(layout);
-            }
-
-            load();
-        </script>
-
+        <link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/css/pro.css" />
+        <link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/css/pro-dark.css" />
+        <link rel="stylesheet" href="style.css" />
+        <script type="module" src="https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.6.81/+esm"></script>
+        <script type="module" src="index.js"></script>   
         <style>
-            perspective-viewer {
-                position: absolute;
-                top: 0;
-                left: 0;
-                bottom: 0;
-                right: 0;
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+        
+            body {
+                font-family: system-ui, sans-serif;
+                background-color: #1a1a1a;
+                color: #fff;
+                min-height: 100vh;
+            }
+        
+            .navbar {
+                background-color: #2c2c2c;
+                padding: 1rem;
+                /* No flex or other layout changes */
+            }
+        
+            .navbar a {
+                color: #aaa;
+                text-decoration: none;
+                font-weight: 500;
+                transition: color 0.2s ease;
+            }
+        
+            .navbar a:hover,
+            .navbar a.active {
+                color: #fff;
+                border-bottom: 2px solid #338dcd;
+            }
+        
+            #app-container {
+                padding: 2rem;
+                margin-top: 0; /* Make sure no margin is added above the container */
             }
         </style>
+        
     </head>
-
     <body>
-        <perspective-viewer editable> </perspective-viewer>
+        <nav class="navbar">
+            <a class="active" href="index.html">Dashboard</a>
+            <a href="mapviz.html">Map Viz</a>
+            <a href="chatbot.html">AutoQuery</a>
+            <a href="#about">AutoChart</a>
+            <a href="#data">Smart Pricing</a>
+
+        </nav>
+
+        <div id="app-container">
+            <!-- JS should laod here -->
+        </div>
     </body>
 </html>
-
-

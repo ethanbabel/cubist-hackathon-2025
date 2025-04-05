@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+        
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+         crossorigin=""/>
+
+        <link rel="preload" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/wasm/perspective-viewer.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" />
+        <link rel="preload" href="https://cdn.jsdelivr.net/npm/@finos/perspective/dist/wasm/perspective-server.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" />
+        <link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/css/themes.css" />
+        <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.3/umd/index.min.js"></script>
+        
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+          
+        <style>
+            /* Ensure body fills viewport */
+            html, body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: hidden; /* Prevent scrollbars */
+            }
+
+            perspective-viewer {
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+            }
+
+            /* Style for Custom Time Controls */
+            #time-controls {
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                background-color: rgba(40, 40, 40, 0.8);
+                padding: 10px;
+                border-radius: 5px;
+                color: white;
+                z-index: 10; /* Ensure it's above the map */
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            #time-controls label {
+                margin-right: 5px;
+            }
+            #time-controls input[type="range"] {
+                width: 100px;
+            }
+            
+            /* Style for Leaflet Map */
+            #leaflet-map {
+                position: absolute;
+                top: 0;
+                left: 0;
+                /* bottom: 0;  Explicit height is often more reliable */
+                /* right: 0; */
+                width: 100%;
+                height: 100%; 
+                z-index: 1; /* Below time controls */
+            }
+
+            /* RESTORED Style for Leaflet Rectangular Marker */
+            .leaflet-rect-icon div {
+                width: 100%;
+                height: 100%;
+                border: 1px solid #fff; /* Optional white border */
+                border-radius: 0; /* Ensure sharp corners */
+                box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Optional shadow */
+            }
+
+            /* Style for Coordinate Display */
+            #coord-display {
+                position: absolute;
+                bottom: 10px; /* Position above time controls */
+                right: 10px;
+                background-color: rgba(0, 0, 0, 0.6);
+                color: #fff;
+                padding: 3px 6px;
+                font-family: monospace;
+                font-size: 12px;
+                border-radius: 3px;
+                z-index: 10; /* Above map, same as time controls */
+                pointer-events: none; /* Prevent it from interfering with map clicks */
+            }
+
+            /* Style for Marker Info Display */
+            #marker-info {
+                position: absolute;
+                bottom: 35px; /* Position above coord display */
+                right: 10px;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: #fff;
+                padding: 3px 6px;
+                font-family: sans-serif;
+                font-size: 13px;
+                border-radius: 3px;
+                z-index: 10; 
+                pointer-events: none; 
+                max-width: 200px; /* Prevent long names from overflowing too much */
+                text-align: right;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <!-- REMOVED perspective-viewer element -->
+        <!-- <perspective-viewer editable> </perspective-viewer> -->
+        
+        <!-- ADD Leaflet Map Container -->
+        <div id="leaflet-map"></div>
+
+        <!-- Custom Time Controls -->
+        <div id="time-controls">
+            <label for="date-input">Date:</label>
+            <input type="date" id="date-input" />
+
+            <label for="time-slider">Time:</label>
+            <input type="range" id="time-slider" min="0" max="143" step="1" value="0" /> 
+            <span id="time-display">00:00</span>
+
+            <button id="play-button">Play</button>
+            <button id="pause-button">Pause</button>
+            <label for="speed-slider">Speed:</label>
+            <input type="range" id="speed-slider" min="100" max="2000" step="100" value="500" />
+        </div>
+
+        <!-- Coordinate Display -->
+        <div id="coord-display">Lat: ---, Lng: ---</div>
+        <!-- Marker Info Display -->
+        <div id="marker-info"></div>
+
+        <!-- MOVED SCRIPT TO END OF BODY -->
+        <script type="module">
+            // ADDING BACK viewer import - might implicitly load needed WASM for worker
+            import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer@3.4.3/dist/cdn/perspective-viewer.js";
+            // Removed other viewer plugin imports
+            // import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer-datagrid@3.4.3/dist/cdn/perspective-viewer-datagrid.js";
+            // import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer-d3fc@3.4.3/dist/cdn/perspective-viewer-d3fc.js";
+            // import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer-openlayers@3.4.3/dist/cdn/perspective-viewer-openlayers.js";
+
+            import { worker } from "https://cdn.jsdelivr.net/npm/@finos/perspective@3.4.3/dist/cdn/perspective.js";
+
+            const WORKER = await worker();
+            // Path to the PREPROCESSED Arrow data file
+            const DATA_FILE_PATH = "mta_map.arrow";
+            
+            let leafletMap = null; // Reference to the Leaflet map instance
+            let perspectiveView = null; // Reference to the Perspective view
+            let markersLayer = null; // Leaflet layer group for markers
+            let congestionTable = null; // Reference to the main data table
+            let baseViewConfig = {}; // Store the config used to create views
+
+            // --- Define Line Geometries ---
+            const lineGeometries = {
+                "Lincoln Tunnel": [[40.760567, -74.003000], [40.765999, -74.018600]],
+                "Queensboro Bridge": [[40.760196, -73.961893], [40.752500, -73.947066]],
+                "East 60th St": [[40.764800, -73.972300], [40.762100, -73.966000]]
+                // Add other bridges/tunnels here if needed
+            };
+
+            // --- Color Scale Function (Example) ---
+            // Simple example: maps CRZ_Entries sum to a color
+            // You can make this more sophisticated (e.g., using chroma.js or d3-scale)
+            function getColorForValue(value) {
+                // UPDATED thresholds for more dramatic effect
+                if (value > 5000) return '#d73027'; // Red (High)
+                if (value > 1000) return '#fc8d59'; // Orange
+                if (value > 500) return '#fee08b'; // Yellow
+                if (value > 100) return '#d9ef8b'; // Light Green
+                if (value > 20) return '#91cf60';  // Green
+                return '#1a9850'; // Dark Green (Low)
+            }
+
+            // RE-ENABLE: Loading full Arrow data
+            async function get_preprocessed_congestion_data() {
+                console.log(`Fetching PREPROCESSED Arrow data from ${DATA_FILE_PATH}`);
+                try {
+                    const resp = await fetch(DATA_FILE_PATH);
+                    if (!resp.ok) {
+                        throw new Error(`HTTP error! status: ${resp.status} while fetching ${DATA_FILE_PATH}`);
+                    }
+                    const arrayBuffer = await resp.arrayBuffer();
+                    console.log("Loading Arrow data into Perspective");
+                    const table = await WORKER.table(arrayBuffer);
+                    console.log("Arrow Data loaded successfully");
+                    return table;
+                } catch (e) {
+                     console.error(`Error fetching or processing data from ${DATA_FILE_PATH}:`, e);
+                     const viewer = document.getElementsByTagName("perspective-viewer")[0];
+                     viewer.innerHTML = `<p style="color: red; padding: 20px;">Error loading data: ${e.message}.<br>Please check the file path and ensure the server is running if needed.</p>`;
+                     throw e;
+                }
+            }
+
+            async function load() {
+                console.log("--- Starting load() function ---");
+                // REMOVED reference to perspective-viewer element
+                // const el = document.getElementsByTagName("perspective-viewer")[0];
+                // el.innerHTML = '<p style="padding: 20px;">Loading data...</p>';
+
+                try {
+                    // --- Initialize Leaflet Map ---
+                    console.log("[1/X] Initializing Leaflet map...");
+                    leafletMap = L.map('leaflet-map').setView([40.7128, -74.0060], 11); // NYC center, zoom 11
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { // Using CartoDB Dark Matter tiles
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                        subdomains: 'abcd',
+                        maxZoom: 19
+                    }).addTo(leafletMap);
+                    markersLayer = L.layerGroup().addTo(leafletMap);
+                    console.log("[1/X] Leaflet map initialized.");
+
+                    // --- Add Mousemove Listener for Coordinates ---
+                    const coordDisplayElement = document.getElementById('coord-display');
+                    leafletMap.on('mousemove', function(e) {
+                        const lat = e.latlng.lat.toFixed(6); // Format to 6 decimal places
+                        const lng = e.latlng.lng.toFixed(6);
+                        coordDisplayElement.textContent = `Lat: ${lat}, Lng: ${lng}`;
+                    });
+                    leafletMap.on('mouseout', function() { // Optional: Clear when mouse leaves map
+                        coordDisplayElement.textContent = `Lat: ---, Lng: ---`;
+                    });
+                    // --------------------------------------------
+
+                    // --- Load Arrow Data into Perspective Table ---
+                    console.log("[2/X] Attempting to load PREPROCESSED Arrow data...");
+                    // Store table globally
+                    congestionTable = await get_preprocessed_congestion_data();
+                    console.log("[2/X] Preprocessed Arrow data loaded into 'congestionTable'.");
+
+                    // --- Define Base View Config (used for creating/recreating views) ---
+                    console.log("[3/X] Defining base Perspective view config...");
+                    baseViewConfig = {
+                        group_by: ["Detection_Group"],
+                        columns: [
+                            "longitude", // Needed for map
+                            "latitude",  // Needed for map
+                            "CRZ_Entries" // Needed for coloring
+                            // Add other columns if needed for tooltips later
+                        ], 
+                        aggregates: { 
+                            "longitude": "avg",            
+                            "latitude": "avg",             
+                            "CRZ_Entries": "sum" // Aggregate for coloring
+                        },
+                        // Initial filter (only lat/lon check)
+                        filter: [["latitude", "is not null"]]
+                    };
+                    // Create the INITIAL view (no time filter yet)
+                    // perspectiveView = await congestionTable.view(baseViewConfig);
+                    // console.log("[3/X] Initial Perspective view created.");
+                    
+                    // Set flag for controls readiness AFTER view is created
+                    isViewerReady = true; 
+                    console.log("Perspective Table is ready. Initializing controls."); // Changed log
+
+                    // Apply initial filter (which will now create the first view)
+                    dateInput.value = '2025-01-05'; // Hardcode known date
+                    console.log(`Applying initial filter for date: ${dateInput.value}`);
+                    await applyTimeFilter(dateInput.value, parseInt(timeSlider.value)); 
+                    
+                    console.log("--- load() function completed successfully! --- ");
+
+                } catch(e) {
+                     console.error("--- ERROR during load() function --- ", e);
+                     // Display error in map div maybe?
+                     document.getElementById('leaflet-map').innerHTML = `<p style="color: red; padding: 20px;">Error during data load/processing: ${e.message}. Check console.</p>`;
+                }
+            }
+
+            // --- Custom Time Control Logic ---
+            const viewerElement = document.getElementsByTagName("perspective-viewer")[0];
+            const dateInput = document.getElementById("date-input");
+            const timeSlider = document.getElementById("time-slider");
+            const timeDisplay = document.getElementById("time-display");
+            const playButton = document.getElementById("play-button");
+            const pauseButton = document.getElementById("pause-button");
+            const speedSlider = document.getElementById("speed-slider");
+
+            let baseConfig = {}; // To store the base config after initial load
+            let playbackInterval = null;
+            let isPlaying = false;
+            let isViewerReady = false; // <<< ADD Readiness Flag
+            const markerInfoElement = document.getElementById('marker-info'); // Get reference
+
+            // Helper to format slider value (0-143) to HH:MM display
+            function formatTimeDisplay(sliderValue) {
+                const totalMinutes = sliderValue * 10;
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            }
+            
+            // Helper to generate the filter string for Toll_10_Minute_Block
+            function getTollBlockFilterString(dateStr, sliderValue) {
+                if (!dateStr) return null; // Need a date
+
+                try {
+                    // Parse the date input (YYYY-MM-DD)
+                    const dateObj = new Date(dateStr + 'T00:00:00Z'); // Use UTC to avoid timezone issues
+                    if (isNaN(dateObj)) return null; // Invalid date
+
+                    const totalMinutes = sliderValue * 10;
+                    dateObj.setUTCMinutes(totalMinutes);
+
+                    // Format to MM/DD/YYYY HH:MM:SS AM/PM (matching the data)
+                    const options = {
+                        year: 'numeric', month: '2-digit', day: '2-digit', 
+                        hour: '2-digit', minute: '2-digit', second: '2-digit',
+                        hour12: true, timeZone: 'UTC' // Critical: Match data's likely source timezone (or adjust if known)
+                    };
+                    // Use en-US locale to ensure MM/DD/YYYY format and AM/PM
+                    let formatted = new Intl.DateTimeFormat('en-US', options).format(dateObj);
+                    
+                    // The Intl API might produce slightly different formats, adjust if needed
+                    // Example: might need to replace comma after date, ensure AM/PM is uppercase
+                    formatted = formatted.replace(',', ''); 
+
+                    return formatted;
+
+                } catch (e) {
+                    console.error("Error formatting date/time string:", e);
+                    return null;
+                }
+            }
+
+            // Function to apply the filter AND UPDATE LEAFLET MAP
+            async function applyTimeFilter(dateStr, timeBlockVal) {
+                // Check flag first & ensure table exists
+                if (!isViewerReady || !congestionTable) {
+                    console.warn("Perspective table/view not ready, skipping filter/update.");
+                    return; 
+                }
+                
+                const targetTimeString = getTollBlockFilterString(dateStr, timeBlockVal);
+                console.log(`Updating filter: TargetString='${targetTimeString}'`);
+
+                let newFilter = [
+                    ["latitude", "is not null"], 
+                ];
+
+                if (targetTimeString) {
+                    newFilter.push(["Toll_10_Minute_Block", "==", targetTimeString]);
+                } else {
+                    console.warn("Cannot generate time string, showing data for all times (if any). Applying only latitude filter.");
+                }
+
+                console.log(`Applying filter to Perspective view: ${JSON.stringify(newFilter)}`);
+
+                try {
+                    // 1. Delete existing view if it exists
+                    if (perspectiveView) {
+                        await perspectiveView.delete();
+                        // console.log("Deleted previous view."); // Optional log
+                    }
+
+                    // 2. Create new view config with the filter
+                    const currentViewConfig = {
+                        ...baseViewConfig, // Start with base aggregations/columns etc.
+                        filter: newFilter   // Add the dynamic time filter
+                    };
+
+                    // 3. Create the new filtered view
+                    // console.log("Creating new filtered view..."); // Optional log
+                    perspectiveView = await congestionTable.view(currentViewConfig);
+                    
+                    // 4. Get filtered, aggregated data from the NEW view
+                    console.log("Fetching filtered data as JSON...");
+                    const filteredJson = await perspectiveView.to_json();
+                    console.log(`Processing ${filteredJson.length} aggregated rows for Leaflet.`);
+
+                    // REMOVING DEBUG LOGGING SECTION
+                    /* 
+                    console.log("--- Starting Debug: Logging Aggregated Data ---");
+                    try {
+                        console.log("[DEBUG] Creating view with aggregation config...");
+                        // Create a config object specifically for the view method
+                        const viewConfig = {
+                            group_by: baseViewConfig.group_by,
+                            columns: [
+                                "longitude", 
+                                "latitude", 
+                                "CRZ_Entries",
+                                "Excluded_Roadway_Entries", 
+                                "Toll_Date", 
+                                "Toll_Hour",
+                                "Toll_10_Minute_Block" // <<< ADDED for debug log
+                            ],
+                            // Ensure aggregates match columns needed for debug view
+                            aggregates: { 
+                                "longitude": "avg",            
+                                "latitude": "avg",             
+                                "CRZ_Entries": "sum",          
+                                "Excluded_Roadway_Entries": "sum", 
+                                "Toll_Date": "dominant",       
+                                "Toll_Hour": "dominant",       
+                                "Toll_10_Minute_Block": "dominant" 
+                            },
+                            filter: baseViewConfig.filter,
+                            sort: baseViewConfig.sort 
+                            // Exclude plugin, plugin_config, settings, theme etc.
+                        };
+                        const debugView = await congestionTable.view(viewConfig); // Use viewConfig here
+                        console.log("[DEBUG] Converting aggregated view to JSON...");
+                        const aggregatedJson = await debugView.to_json();
+                        console.log("[DEBUG] Aggregated Data (first 5 rows shown):");
+                        console.table(aggregatedJson.slice(0, 5)); // Log first 5 rows as a table
+                        console.log(`[DEBUG] Total aggregated rows: ${aggregatedJson.length}`);
+                        
+                        // <<< ADD CONDITIONAL FULL LOGGING >>>
+                        if (targetTimeString === '12/31/2024 01:00:00 AM') { // Example problematic time
+                            console.log("--- FULL JSON Data for 12/31/2024 01:00:00 AM ---");
+                            console.log(JSON.stringify(filteredJson, null, 2)); // Log the whole array prettified
+                            console.log("-----------------------------------------------");
+                        }
+                        
+                        console.log("[DEBUG] Deleting debug view...");
+                        await debugView.delete();
+                    } catch(e) {
+                        console.error("[DEBUG] Error creating or logging aggregated view:", e);
+                    }
+                    console.log("--- Finished Debug: Logging Aggregated Data ---");
+                    */
+                    // --- END DEBUG ---
+                    
+                    // 5. Update Leaflet map
+                    markersLayer.clearLayers(); // Remove previous markers
+
+                    filteredJson.forEach(row => {
+                        const locationName = row.__ROW_PATH__ ? row.__ROW_PATH__[0] : 'Unknown'; // Get name from group_by path
+                        const entries = row.CRZ_Entries || 0;
+                        const color = getColorForValue(entries);
+                        
+                        // Check if this location should be a line or a point marker
+                        if (lineGeometries[locationName]) {
+                            // Draw a Polyline
+                            const polyline = L.polyline(lineGeometries[locationName], {
+                                color: color,      // Set color based on entries
+                                weight: 5,         // Line thickness
+                                opacity: 0.8
+                            })
+                            .bindPopup(`<b>${locationName}</b><br>Entries: ${entries.toLocaleString()}`) 
+                            .addTo(markersLayer);
+
+                            // Add hover effect for line name
+                            polyline.on('mouseover', function (e) {
+                                markerInfoElement.textContent = locationName;
+                            });
+                            polyline.on('mouseout', function (e) {
+                                markerInfoElement.textContent = ''; 
+                            });
+
+                        } else if (row.latitude != null && row.longitude != null) {
+                            // Draw a Point Marker (Rectangle)
+                            const lat = row.latitude;
+                            const lon = row.longitude;
+                            
+                            // console.log(`  -> Marker: ${locationName}, Entries: ${entries}, Color: ${color}`);
+
+                            // Create a divIcon for the rectangular marker
+                            const rectIcon = L.divIcon({
+                                className: 'leaflet-rect-icon', // Add a class for CSS styling
+                                html: `<div style="background-color: ${color};"></div>`, // Apply color directly
+                                iconSize: [12, 12], // Size of the rectangle (adjust as needed)
+                                iconAnchor: [6, 6]  // Anchor point (center)
+                            });
+
+                            // Create Leaflet marker with the custom icon
+                            const marker = L.marker([lat, lon], { // Store marker reference
+                                icon: rectIcon
+                            })
+                            .bindPopup(`<b>${locationName}</b><br>Entries: ${entries.toLocaleString()}`) // Add basic popup
+                            .addTo(markersLayer);
+
+                            // <<< ADD Marker Event Listeners >>>
+                            marker.on('mouseover', function (e) {
+                                markerInfoElement.textContent = locationName;
+                            });
+                            marker.on('mouseout', function (e) {
+                                markerInfoElement.textContent = ''; // Clear on mouse out
+                            });
+                            // ----------------------------------
+                        }
+                    });
+
+                    // Update display after successful update
+                    timeDisplay.textContent = formatTimeDisplay(timeBlockVal);
+                    console.log("Leaflet map updated.");
+
+                } catch (e) {
+                    console.error("Error applying filter or updating Leaflet map:", e);
+                }
+            }
+
+            // --- Event Listeners ---
+            dateInput.addEventListener('change', () => { // Use 'change' for date picker
+                if (isPlaying) pauseButton.click(); 
+                // Ensure slider value is int before passing
+                applyTimeFilter(dateInput.value, parseInt(timeSlider.value));
+            });
+
+            timeSlider.addEventListener('input', () => {
+                 // Only update display during sliding
+                 timeDisplay.textContent = formatTimeDisplay(parseInt(timeSlider.value));
+            });
+            
+            timeSlider.addEventListener('change', () => { // Apply filter when slider released
+                 if (isPlaying) pauseButton.click();
+                 // Ensure slider value is int before passing
+                 applyTimeFilter(dateInput.value, parseInt(timeSlider.value));
+            });
+
+            playButton.addEventListener('click', () => {
+                 // Check readiness flag first
+                 if (!isViewerReady) {
+                    console.warn("Viewer not ready, cannot start playback.");
+                    return;
+                 } 
+                 if (isPlaying || !dateInput.value) return; // Don't play if already playing or no date
+                 console.log("Play clicked");
+                 isPlaying = true;
+                 playButton.disabled = true;
+                 pauseButton.disabled = false;
+                 dateInput.disabled = true; // Prevent date change during playback
+                 timeSlider.disabled = true; // Prevent manual scrub during playback
+
+                 const playStep = () => {
+                     let currentValue = parseInt(timeSlider.value);
+                     let nextValue = currentValue + 1;
+                     if (nextValue > parseInt(timeSlider.max)) {
+                         nextValue = 0; // Loop back to start
+                     }
+                     timeSlider.value = nextValue;
+                     // Ensure nextValue is int before passing
+                     applyTimeFilter(dateInput.value, nextValue);
+                 };
+
+                 const speed = parseInt(speedSlider.value);
+                 playbackInterval = setInterval(playStep, speed);
+                 playStep(); // Apply the first step immediately
+            });
+
+            pauseButton.addEventListener('click', () => {
+                if (!isPlaying) return;
+                console.log("Pause clicked");
+                isPlaying = false;
+                clearInterval(playbackInterval);
+                playbackInterval = null;
+                playButton.disabled = false;
+                pauseButton.disabled = true;
+                dateInput.disabled = false; // Re-enable controls
+                timeSlider.disabled = false;
+            });
+
+            // --- Initialization ---
+            pauseButton.disabled = true; // Start with Pause disabled
+            // Set date input constraints and initial value
+            dateInput.min = '2025-01-05';
+            dateInput.max = '2025-03-29';
+            dateInput.value = '2025-01-05'; // Start at the beginning of the range
+
+            // Wait for table to load before allowing filter application
+            const checkTableReady = setInterval(() => {
+                if (congestionTable) {
+                    clearInterval(checkTableReady);
+                    isViewerReady = true; 
+                    console.log("Perspective Table is ready. Initializing controls.");
+                    console.log(`Applying initial filter for date: ${dateInput.value}`);
+                    applyTimeFilter(dateInput.value, parseInt(timeSlider.value)); 
+                }
+            }, 100); // Check every 100ms
+
+            // Ensure this runs after the script block
+            load(); 
+
+        </script>
+                <nav class="navbar">
+                    <a href="index.html">Dashboard</a>
+                    <a class="active" href="mapviz.html">Map Viz</a>
+                    <a href="chatbot.html">AutoQuery</a>
+                    <a href="#about">AutoChart</a>
+                    <a href="#data">Smart Pricing</a>
+        
+                </nav>
+        
+    </body>
+</html> 

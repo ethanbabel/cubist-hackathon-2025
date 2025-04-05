@@ -1,0 +1,17 @@
+from vanna.google import GoogleGeminiChat
+from vanna.chromadb import ChromaDB_VectorStore
+from dotenv import load_dotenv
+import os
+load_dotenv()
+class MyVanna(ChromaDB_VectorStore, GoogleGeminiChat):
+    def __init__(self, config=None):
+        ChromaDB_VectorStore.__init__(self, config=config)
+        GoogleGeminiChat.__init__(self, config=config)
+
+vn = MyVanna(config={'api_key': os.getenv("GOOGLE_API_KEY"), 'model': 'gemini-2.0-flash'})
+vn.connect_to_sqlite(url='mta_chat.sqlite')
+
+
+from vanna.flask import VannaFlaskApp
+app = VannaFlaskApp(vn, allow_llm_to_see_data=True, ask_results_correct=False)
+app.run()
