@@ -1,0 +1,2 @@
+perspective==1.0.3
+perspective-python==3.4.3
