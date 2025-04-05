@@ -11,8 +11,6 @@ Usage
 Data Visualization
 Interactive Map
 Graphs & Charts
-Contributing
-License
 
 ## Features 
 ### AI-Powered Data Querying:
@@ -32,10 +30,32 @@ View real-time traffic trends and congestion levels across different MTA zones w
 The goal of the congestion model is to determine optimal congestion tolls for each entry point into the Manhattan Central Business District that are dynamically adjusted, both:
 - Locally: at the specific entry point, and
 - Globally: across the entire Central Residential Zone (CRZ)
+- The congestion model is fixed and does not learn — it merely simulates driver behavior in response to tolling.
 
-The congestion model is fixed and does not learn — it merely simulates driver behavior in response to tolling.
+Congestion score is defined as follows:
+```math
+\text{congestion} = 1 - \frac{\text{currentFlowRate}}{\text{freeFlowRate}}
+```
+Economic theory and empirical studies show that demand for urban travel is price elastic, meaning that as tolls rise, fewer vehicles enter, reducing congestion. The relationship is nonlinear, especially near behavioral tipping points.
+We used a differentiable sigmoid-like function to model this shape:
+```math
+\text{congestion} = \frac{\text{base}}{1 + \exp(k \cdot (\text{toll} - \theta))}
+```
+Where:
+- base is the max congestion if tolls are free.
+- θ is the inflection point. 
+- k controls steepness.
+
+This produces the characteristic S-curve shown below:
+
+![congestion vs toll plot](congestion_vs_toll.png)
+
+This functional form is backed by empirical elasticity studies (e.g., Small & Verhoef, The Economics of Urban Transportation, 2007, etc). 
+
+
+
 =======
-# cubist-hackathon-2025
+# Project Configuration Docs
 
 ## Setup Instructions
 
@@ -53,11 +73,25 @@ For the backend (Vanna integration), run:
 
 pip install -r requirements.txt
 
-3. Start the server
+3. Start the core dashboard web server
 Run the following command to start the local server:
 
-python3 -m http.server
+`python3 -m http.server`
 This will start the server at localhost:8000.
+
+4. Start the chatbot server
+In a new terminal, create a virtual environment and instal the requirements.txt in your tool of choice (we used python venv)
+Then, navigate to /ai_chat and run `python3 chat_server`
+
+5. Start the deep learning API server
+In a new terminal, create a virtual environment and instal the requirements.txt in your tool of choice 
+Then, run `python3 python_scripts/app.py` from the base folder
+
+6. Start the autochart server
+In a new terminal, create a virtual environment and install the requirements.txt in your tool of choice
+Then, run `python3 api/autochart_backend.py`
+
+In the future we would like to integrate our APIs under one backend and containerize this deployment for ease of use
 
 ## Usage
 
@@ -82,7 +116,6 @@ Graphs and charts are created using Perspective and will allow for detailed anal
 Traffic Trends: Track how traffic congestion evolves over time.
 Comparative Data: Compare traffic between different zones or time intervals.
 Historical Analysis: View how congestion has changed over days, weeks, or months.
-
 Time Series Graphs to show traffic density over time.
 Bar/Column Charts for comparing congestion levels across multiple zones.
 Heatmaps to visualize traffic intensity within zones at specific times.
