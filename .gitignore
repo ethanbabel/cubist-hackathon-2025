@@ -10,6 +10,3 @@ __pycache__/
 # Ignore Jupyter Notebook 
 *.ipynb
 
-# Ignore png files
-*.png
-
