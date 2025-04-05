@@ -34,7 +34,7 @@ class DifferentiableCongestion(nn.Module):
         base = self.congestion_base * (0.5 * local_congestion + 0.5 * global_congestion)
         decay = 1 + torch.exp((toll - self.threshold) / self.sharpness)
         congestion = base / decay
-        return congestion  # ⚠️ no clamp – allow model to learn via penalty
+        return congestion  
 
 def simulate_inputs(n_samples=10000, seed=42):
     torch.manual_seed(seed)
@@ -91,7 +91,7 @@ def train_model(
     torch.save(model.state_dict(), save_path)
     print(f"✅ Model saved to {save_path}")
 
-    # 📊 Save plot of congestion response curve
+    # Save plot of congestion response curve
     import matplotlib.pyplot as plt
 
     local = torch.tensor([0.6])

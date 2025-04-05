@@ -31,7 +31,7 @@ def run_realtime():
     global_congestion = fetch_crz_global_score()
     local_congestions = fetch_realtime_entry_scores()
 
-    print(f"✅ Global CRZ Congestion: {global_congestion:.2f}\n")
+    print(f"Global CRZ Congestion: {global_congestion:.2f}\n")
 
     for entry in entry_points:
         local_congestion = local_congestions.get(entry, 0.0)

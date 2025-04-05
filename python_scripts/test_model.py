@@ -21,7 +21,7 @@ def test_model(model_path="trained_model.pt"):
         "Hugh L. Carey Tunnel": (0.7, 0.7),
     }
 
-    print("🧪 Model Toll Predictions for Given Congestion Levels\n")
+    print("Model Toll Predictions for Given Congestion Levels\n")
     for local, global_ in test_inputs.values():
         x = torch.tensor([[local, global_]], dtype=torch.float32)
         with torch.no_grad():

@@ -57,7 +57,7 @@ def get_crz_congestion_by_sampling(polygon=CRZ_POLYGON, grid_size=5, delay=0.2):
         avg_score = round(sum(valid_scores) / len(valid_scores), 2)
         return avg_score
     else:
-        print("❌ No valid congestion data found within polygon")
+        print("No valid congestion data found within polygon")
         return None
 
 def fetch_realtime_entry_scores():
