@@ -248,7 +248,7 @@
         }
     },
     "Single Scatter Plot": {
-        "sizes": [0.3, 0.7],
+        "sizes": [1],
         "detail": {
             "main": {
                 "type": "tab-area",
@@ -257,39 +257,7 @@
             }
         },
         "mode": "globalFilters",
-        "master": {
-            "widgets": ["PERSPECTIVE_GENERATED_ID_11"],
-            "sizes": [1]
-        },
         "viewers": {
-            "PERSPECTIVE_GENERATED_ID_11": {
-                "plugin": "Datagrid",
-                "plugin_config": {
-                    "columns": {},
-                    "editable": false,
-                    "scroll_lock": false
-                },
-                "settings": false,
-                "title": "Select X-Axis Metric",
-                "group_by": [],
-                "split_by": [],
-                "columns": [
-                    "Excluded Roadway Entries",
-                    "Vehicle Class",
-                    "Detection Group",
-                    "Time Period",
-                    "Hour of Day",
-                    "Day of Week"
-                ],
-                "filter": [],
-                "sort": [],
-                "expressions": {},
-                "aggregates": {},
-                "master": true,
-                "table": "mta",
-                "linked": false,
-                "selectable": "select"
-            },
             "PERSPECTIVE_GENERATED_ID_10": {
                 "plugin": "X/Y Scatter",
                 "plugin_config": {},
