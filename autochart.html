@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoQuery</title>
+    <link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/@finos/perspective-workspace@3.4.0/dist/css/themes.css">
     <style>
         * {
             box-sizing: border-box;
@@ -93,6 +94,13 @@
             border-radius: 8px;
             overflow: hidden;
             min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        perspective-workspace {
+            flex-grow: 1;
+            height: 100%;
         }
 
         .loading {
@@ -114,87 +122,15 @@
     <div class="container">
         <div class="input-container">
             <input type="text" id="questionInput" placeholder="Ask a question about the traffic data...">
-            <button onclick="askQuestion()">Generate Chart</button>
+            <button onclick="window.askQuestion()">Generate Chart</button>
             <span class="loading" id="loadingIndicator">Generating chart...</span>
         </div>
         <div id="recommendation" class="recommendation"></div>
-        <div id="graphContainer"></div>
+        <div id="graphContainer">
+            <perspective-workspace id="workspace"></perspective-workspace>
+        </div>
     </div>
 
-    <script>
-        const API_URL = 'http://localhost:5001/api/chart-recommendation';
-        const questionInput = document.getElementById('questionInput');
-        const recommendationDiv = document.getElementById('recommendation');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const graphContainer = document.getElementById('graphContainer');
-
-        async function askQuestion() {
-            const question = questionInput.value.trim();
-            if (!question) return;
-
-            // Show loading
-            loadingIndicator.style.display = 'inline';
-            recommendationDiv.style.display = 'none';
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question }),
-                });
-
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Show recommendation
-                    recommendationDiv.textContent = data.recommendation;
-                    recommendationDiv.style.display = 'block';
-
-                    // Log the layout configuration
-                    console.log('Generated Layout Configuration:');
-                    console.log(JSON.stringify(data.layout, null, 2));
-
-                    // Create new graph
-                    const layout = data.layout;
-                    
-                    // Send message to parent window (Perspective) to create new graph
-                    window.parent.postMessage({
-                        type: 'create_graph',
-                        layout: layout
-                    }, '*');
-                } else {
-                    recommendationDiv.textContent = 'Error: ' + (data.error || 'Failed to get recommendation');
-                    recommendationDiv.style.display = 'block';
-                    console.error('Error:', data.error);
-                }
-            } catch (error) {
-                recommendationDiv.textContent = 'Error: ' + error.message;
-                recommendationDiv.style.display = 'block';
-                console.error('Error:', error);
-            } finally {
-                loadingIndicator.style.display = 'none';
-            }
-        }
-
-        // Allow Enter key to submit
-        questionInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                askQuestion();
-            }
-        });
-
-        // Listen for messages from parent window
-        window.addEventListener('message', (event) => {
-            if (event.data.type === 'graph_created') {
-                if (event.data.success) {
-                    console.log('Graph created successfully');
-                } else {
-                    console.error('Failed to create graph:', event.data.error);
-                }
-            }
-        });
-    </script>
+    <script type="module" src="autochart.js"></script>
 </body>
 </html>
