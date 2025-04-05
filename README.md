@@ -57,7 +57,7 @@ Explore the different graphs and charts (once implemented) for detailed traffic 
 
 ## Data Visualization
 
-### Interactive Map - TODO
+### Interactive Map 
 This feature displays a map of MTA zones with traffic density data shown at various time intervals. The map allows users to zoom in on specific areas and see how congestion levels change in real-time.
 
 Zones: Traffic data is segmented by zone.
