@@ -1,6 +1,17 @@
 # Ignore data (file size too large)
 MTA_Congestion_Relief_Zone_Vehicle_Entries__Beginning_2025_20250404.csv
 
+<<<<<<< HEAD
+# Ignore .env files
+*.env
+
+# Ignore Python cache files
+__pycache__/
+
+# Ignore Jupyter Notebook 
+*.ipynb
+
+=======
 .venv
 venv
 # compiled output
@@ -94,3 +105,4 @@ lerna-debug.log
 Thumbs.db
 
 mta_data.csv
+>>>>>>> main

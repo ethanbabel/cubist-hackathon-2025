@@ -1,0 +1,47 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  h1 {
+    text-align: center;
+    background: #222;
+    color: white;
+    padding: 10px;
+    margin: 0;
+  }
+  
+  #container {
+    display: flex;
+    flex-direction: row;
+    height: 90vh;
+  }
+  
+  #map {
+    flex: 2;
+    height: 100%;
+  }
+  
+  #toll-table {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f4f4f4;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  thead {
+    background: #333;
+    color: white;
+  }
