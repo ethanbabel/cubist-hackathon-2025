@@ -1,8 +1,8 @@
 # cubist-hackathon-2025
 
-# Modeling Toll Pricing for Congestion Management
+## Modeling Toll Pricing for Congestion Management
 
-## Objective
+**Objective**
 
 The goal of the congestion model is to determine optimal congestion tolls for each entry point into the Manhattan Central Business District that are dynamically adjusted, both:
     - Locally: at the specific entry point, and
