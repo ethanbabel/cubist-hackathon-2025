@@ -60,7 +60,7 @@
                 const evictions = get_evictions();
                 const layout_json = await fetch("layout.json");
                 const layout = await layout_json.json();
-
+                
                 el.load(await evictions);
                 el.restore(layout);
             }
