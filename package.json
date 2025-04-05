@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@finos/perspective": "^3.4.3",
+    "@finos/perspective-viewer-d3fc": "^3.4.3",
+    "@finos/perspective-viewer-datagrid": "^3.4.3",
+    "@finos/perspective-viewer-openlayers": "^3.4.3"
+  }
+}
