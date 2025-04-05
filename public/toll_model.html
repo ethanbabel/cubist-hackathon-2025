@@ -3,79 +3,237 @@
 <head>
   <meta charset="UTF-8" />
   <title>Toll Pricing Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
+    :root {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #f0f0f0;
+      --muted: #999;
+      --border: #2a2a2a;
+      --hover: #2e2e2e;
+      --accent: #007bff;
+      --accent-hover: #0056b3;
     }
 
-    h1 {
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: var(--card);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+    }
+
+    h1, h2 {
+      color: var(--text);
       margin-bottom: 10px;
     }
 
+    .top-section {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+
+    .map-section, .output-section {
+      flex: 1;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+
     #map {
-      height: 600px;
       width: 100%;
-      margin-bottom: 30px;
+      background: #2b2b2b;
+      border-radius: 8px;
+    }
+
+    .sidebar-section {
+      background: var(--bg);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      flex-grow: 1;
+      border: 1px solid var(--border);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 15px;
+      border-radius: 8px;
+      overflow: hidden;
     }
 
     th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
       text-align: center;
+      color: var(--text);
     }
 
     th {
-      background-color: #f2f2f2;
+      background-color: #2a2a2a;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: var(--hover);
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    input[type="number"] {
+      padding: 8px 12px;
+      width: 150px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background-color: #2c2c2c;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    #local-inputs {
+      margin-top: 10px;
+    }
+
+    p {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    strong {
+      font-weight: 600;
+    }
+
+    .tester-section {
+      margin-top: 40px;
+      padding: 20px;
+      background: var(--bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    @media (max-width: 768px) {
+      .top-section {
+        flex-direction: column;
+      }
+
+      .map-section, .output-section {
+        height: auto;
+      }
+
+      #map {
+        height: 400px !important;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Toll Pricing Dashboard</h1>
-  <div id="map"></div>
+  <div class="container">
+    <h1>Toll Pricing Dashboard</h1>
 
-  <h2>Model Toll Output</h2>
+    <!-- Top: Map + Model Toll Output -->
+    <div class="top-section">
+      <div class="map-section">
+        <div id="map"></div>
+      </div>
 
-  <p><strong>Global CRZ Congestion:</strong> <span id="global-congestion">Loading...</span></p>
-  <table id="toll-table">
-    <thead>
-      <tr>
-        <th>Entry Point</th>
-        <th>Local Congestion</th>
-        <th>Model Toll ($)</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+      <div class="output-section">
+        <div class="sidebar-section" id="model-output">
+          <h2>Model Toll Output</h2>
+          <p><strong>Global CRZ Congestion:</strong> <span id="global-congestion">Loading...</span></p>
 
-  <hr />
-  <h2>Model Tester</h2>
+          <table id="toll-table">
+            <thead>
+              <tr>
+                <th>Entry Point</th>
+                <th>Local Congestion</th>
+                <th>Model Toll ($)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-  <label for="global-input">Global Congestion:</label>
-  <input type="number" step="0.01" id="global-input" value="0.5" min="0" max="1" />
+    <!-- Bottom: Model Tester -->
+    <div class="tester-section">
+      <h2>Model Tester</h2>
+      <label for="global-input">Global Congestion:</label>
+      <input type="number" step="0.01" id="global-input" value="0.5" min="0" max="1" />
 
-  <div id="local-inputs"></div>
+      <div id="local-inputs"></div>
 
-  <button onclick="runModelTester()">Run Model</button>
+      <button onclick="runModelTester()">Run Model</button>
 
-  <table id="test-results">
-    <thead>
-      <tr>
-        <th>Entry Point</th>
-        <th>Local Congestion</th>
-        <th>Predicted Toll</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+      <table id="test-results">
+        <thead>
+          <tr>
+            <th>Entry Point</th>
+            <th>Local Congestion</th>
+            <th>Predicted Toll</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-<script src="toll_model.js"></script>
+  <script src="toll_model.js"></script>
+
+  <script>
+    function syncMapHeight() {
+      const modelOutput = document.getElementById('model-output');
+      const map = document.getElementById('map');
+      if (modelOutput && map) {
+        const height = modelOutput.offsetHeight;
+        map.style.height = height + 'px';
+      }
+    }
+
+    window.addEventListener('load', syncMapHeight);
+
+    const observer = new MutationObserver(syncMapHeight);
+    observer.observe(document.getElementById('toll-table').getElementsByTagName('tbody')[0], {
+      childList: true,
+      subtree: true,
+    });
+
+    window.addEventListener('resize', syncMapHeight);
+  </script>
 </body>
 </html>
