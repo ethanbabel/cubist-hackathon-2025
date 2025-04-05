@@ -32,7 +32,7 @@ Before you start, make sure you have the following installed:
 Python 3.x
 
 1. Clone the repository
-git clone https://github.com/yourusername/cubist-hackathon-2025.git
+git clone https://github.com/ethanbabel/cubist-hackathon-2025.git
 cd cubist-hackathon-2025
 
 2. Install dependencies
