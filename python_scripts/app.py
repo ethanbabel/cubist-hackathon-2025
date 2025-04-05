@@ -5,11 +5,11 @@ from flask import request
 
 load_dotenv()
 
-app = Flask(__name__, static_folder='public', static_url_path='')
+app = Flask(__name__, static_folder='../public', static_url_path='')
 
 @app.route("/")
 def index():
-    return send_from_directory('public', 'toll_model.html')
+    return send_from_directory('../public', 'toll_model.html')
 
 @app.route("/api/maps_api_key")
 def maps_api_key():
