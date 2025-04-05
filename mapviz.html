@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+        
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+         crossorigin=""/>
+
+        <!-- RESTORE Perspective Preload/CSS -->
+        <link rel="preload" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/wasm/perspective-viewer.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" />
+        <link rel="preload" href="https://cdn.jsdelivr.net/npm/@finos/perspective/dist/wasm/perspective-server.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" />
+        <link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/css/themes.css" />
+        <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.3/umd/index.min.js"></script>
+        
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+          
+        <!-- REMOVE Leaflet.TimeDimension CSS/JS -->
+        <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.control.min.css" /> -->
+        <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"></script> -->
+        <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.min.js"></script> -->
+        
+        <style>
+            /* Ensure body fills viewport */
+            html, body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: hidden; /* Prevent scrollbars */
+            }
+
+            perspective-viewer {
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+            }
+
+            /* Style for Custom Time Controls */
+            #time-controls {
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                background-color: rgba(40, 40, 40, 0.8);
+                padding: 10px;
+                border-radius: 5px;
+                color: white;
+                z-index: 10; /* Ensure it's above the map */
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            #time-controls label {
+                margin-right: 5px;
+            }
+            #time-controls input[type="range"] {
+                width: 100px;
+            }
+            
+            /* Style for Leaflet Map */
+            #leaflet-map {
+                position: absolute;
+                top: 0;
+                left: 0;
+                /* bottom: 0;  Explicit height is often more reliable */
+                /* right: 0; */
+                width: 100%;
+                height: 100%; 
+                z-index: 1; /* Below time controls */
+            }
+
+            /* RESTORE Marker and Animation Styles */
+            .leaflet-rect-icon div {
+                border-radius: 1px;
+            }
+            .leaflet-line-icon div {
+                /* No specific border-radius needed for line segment */
+            }
+            .leaflet-custom-icon div {
+                width: 100%;
+                height: 100%;
+                border: none; 
+                box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.5); /* Shared glow effect */
+                transform-origin: center center; 
+            }
+
+            /* RESTORE Coordinate and Info Display CSS */
+             #coord-display {
+                position: absolute;
+                bottom: 10px; 
+                right: 10px;
+                background-color: rgba(0, 0, 0, 0.6);
+                color: #fff;
+                padding: 3px 6px;
+                font-family: monospace;
+                font-size: 12px;
+                border-radius: 3px;
+                z-index: 10; 
+                pointer-events: none; 
+            }
+            #marker-info {
+                position: absolute;
+                bottom: 35px; 
+                right: 10px;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: #fff;
+                padding: 3px 6px;
+                font-family: sans-serif;
+                font-size: 13px;
+                border-radius: 3px;
+                z-index: 10; 
+                pointer-events: none; 
+                max-width: 200px; 
+                text-align: right;
+            }
+
+            /* REMOVED Tiered Animations (Keyframes and Classes) */
+
+            /* --- ADD NEW ChatGPT CSS Animation --- */
+            /* REMOVING THIS - Replacing with new glow logic 
+            @keyframes move-up-fade {
+              0% { opacity: 1; transform: translateY(0px); }
+              100% { opacity: 0; transform: translateY(-20px); }
+            }
+            */
+
+            /* Layer for custom glows - REMOVE */
+            /*
+            #glow-layer {
+// ... existing code ...
+            }
+            */
+
+            /* REMOVING TRANSPARENT MARKER STYLE */
+            /* 
+            .transparent-marker .leaflet-marker-icon {
+                 opacity: 0 !important;
+                 cursor: pointer; 
+                 pointer-events: auto !important; 
+                 width: 15px !important; 
+                 height: 15px !important;
+            }
+            .transparent-marker .leaflet-marker-shadow {
+                display: none;
+            }
+            */
+
+            /* REMOVING OLD GLOW CIRCLE STYLE */
+            /*
+            .glow-circle {
+              position: absolute; 
+              width: var(--circle-size);
+              height: var(--circle-size);
+              border-radius: 50%;
+              background-color: var(--base-color); 
+              animation: horizontal-glow-wipe var(--animation-duration) linear infinite;
+              opacity: 0.7; 
+            }
+            */
+
+            /* REMOVING OLD KEYFRAMES */
+            /*
+            @keyframes horizontal-glow-wipe {
+              0% {
+                background: linear-gradient(90deg, var(--base-color) 0%, transparent 5%, transparent 95%, var(--base-color) 100%);
+              }
+              50% {
+                background: linear-gradient(90deg, var(--base-color) 0%, var(--glow-color) 45%, var(--glow-color) 55%, var(--base-color) 100%);
+              }
+              100% {
+                background: linear-gradient(90deg, transparent 0%, transparent 95%, var(--base-color) 100%, var(--base-color) 0%); 
+              }
+            }
+            */
+
+            /* --- ADD NEW ChatGPT Amorphous Glow CSS --- */
+            @keyframes glow-spread {
+                0% {
+                    opacity: 0.7;
+                    transform: scale(0.5) translateX(0px);
+                    filter: blur(8px);
+                }
+                100% {
+                    opacity: 0;
+                    transform: scale(2.5) translateX(var(--spread-distance));
+                    filter: blur(25px);
+                }
+            }
+
+            /* --- ADD Static Gate CSS --- */
+            /*
+            @keyframes gate-pulse {
+                0% { transform: scale(1); opacity: 0.6; }
+                50% { transform: scale(1.4); opacity: 1.0; }
+                100% { transform: scale(1); opacity: 0.6; }
+            }
+            */
+
+            .static-gate-marker div {
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                box-shadow: 0 0 8px rgba(0,0,0,0.4);
+                /* animation-name: gate-pulse;
+                animation-iteration-count: infinite;
+                animation-timing-function: ease-in-out; */
+            }
+            /* --- END Static Gate CSS --- */
+
+            /* REMOVED .amorphous-glow style block - will be inline now */
+            /*
+            .amorphous-glow {
+// ... existing code ...
+            }
+            */
+            /* --- END NEW CSS --- */
+
+            /* START: Timeline Visualization CSS */
+            #timeline-container {
+                position: absolute;
+                bottom: 30px; /* Adjust height above bottom */
+                left: 50%;
+                transform: translateX(-50%);
+                width: 90%;
+                max-width: 1200px; /* Limit maximum width */
+                background-color: rgba(20, 20, 20, 0.9);
+                color: #eee;
+                z-index: 1000; /* Ensure it's above most map elements */
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                border-radius: 10px;
+                padding: 0; /* Remove container padding, handle in controls/wrapper */
+                display: flex; /* Use flex for internal layout */
+                flex-direction: column; /* Stack controls above chart */
+                /* gap: 10px; */ /* Remove gap, handle spacing internally */
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            }
+            #timeline-controls {
+                display: flex;
+                justify-content: space-between; /* Push groups to left/center/right */
+                align-items: center;
+                padding: 10px 20px;
+                background-color: rgba(20, 20, 20, 0.95);
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 14px;
+                border-bottom: 1px solid #333;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+            }
+
+            /* Styling for the main groups */
+            #tl-left-group,
+            #tl-timeframe-display,
+            #tl-info-display,
+            #day-slider-group,
+            #tl-mode-switcher {
+              display: flex;
+              align-items: center;
+              gap: 10px; /* Space within each group */
+            }
+
+            /* Specific overrides */
+            #timeline-controls button {
+                padding: 5px 10px; /* Slightly larger padding */
+                background-color: #555;
+                border: 1px solid #777;
+                color: #eee;
+                border-radius: 6px; /* More rounded */
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+            #timeline-controls button:hover {
+                background-color: #777; /* Hover effect */
+            }
+            #timeline-controls button:disabled {
+                background-color: #333;
+                color: #888;
+                cursor: default;
+            }
+            #timeline-controls label {
+                margin-left: 0; /* Remove default margin */
+                color: #ccc;
+            }
+            /* Remove old general .timeline-label rule */
+            
+            /* Specific label styles */
+            #tl-timeframe-display {
+              font-size: 13px;
+              color: #ccc;
+              font-style: italic;
+            }
+            #tl-info-text {
+              font-weight: 600; /* Bolder */
+              font-size: 15px; /* Slightly larger */
+              color: #fff;
+              min-width: 150px; /* Keep min-width */
+              text-align: center;
+            }
+            #mode-display {
+              font-weight: 500;
+              min-width: 80px; /* Adjust as needed */
+              text-align: center;
+            }
+            /* Remove old .control-group rule if it exists */
+            
+            #chart-wrapper {
+                width: 100%;
+                overflow-x: scroll; 
+                overflow-y: hidden;
+                height: 105px; 
+                cursor: grab;
+                white-space: nowrap; 
+                background-color: #2a2a2a; /* Set background here */
+                border-bottom-left-radius: 10px; /* Match container rounding */
+                border-bottom-right-radius: 10px;
+                padding: 5px 0; /* Add some vertical padding */
+                scrollbar-width: thin; /* Firefox */
+                scrollbar-color: #666 #333; /* Firefox */
+            }
+            #timeline-canvas {
+                display: block; 
+                /* background-color: #2a2a2a; MOVED to wrapper */
+                height: 100px; /* Explicit height */
+                /* JS sets style.width based on data */
+                border: none; /* Remove yellow debug border */
+            }
+            /* END: Timeline Visualization CSS */
+            
+            /* Timeline Legend */
+            #timeline-legend {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                left: auto;
+                padding: 8px 12px;
+                background-color: rgba(40, 40, 40, 0.85);
+                border-radius: 6px;
+                z-index: 1000; /* Ensure it's above the map and timeline */
+                text-align: right;
+                font-size: 14px;
+                line-height: 1.4;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+                color: #ffffff;
+                font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+                pointer-events: none; /* Allow clicks to pass through to map */
+                max-width: 200px;
+            }
+
+            #tl-current-info {
+                font-weight: bold;
+                margin-top: 4px;
+            }
+
+            #tl-timeframe {
+                opacity: 0.9;
+            }
+            
+            /* Nice scrollbar for chart */
+            #chart-wrapper::-webkit-scrollbar {
+                height: 8px;
+            }
+
+            #chart-wrapper::-webkit-scrollbar-track {
+                background: #333;
+                border-radius: 4px;
+            }
+
+            #chart-wrapper::-webkit-scrollbar-thumb {
+                background-color: #666;
+                border-radius: 4px;
+                border: 2px solid #333;
+            }
+
+            #chart-wrapper::-webkit-scrollbar-thumb:hover {
+                background-color: #888;
+            }
+            
+        </style>
+    </head>
+
+    <body>
+        <!-- Leaflet Map Container -->
+        <div id="leaflet-map"></div>
+
+        <!-- Container for Custom Glow Animations -->
+        <div id="glow-layer"></div>
+        
+        <!-- Timeline Legend - Moved outside timeline container -->
+        <div id="timeline-legend">
+          <div id="tl-timeframe">
+            <span id="tl-left-label">Start</span> – <span id="tl-right-label">End</span>
+          </div>
+          <div id="tl-current-info">
+            <span id="tl-info-text">--:-- – 0 entries</span>
+          </div>
+        </div>
+
+        <div id="coord-display">Lat: ---, Lng: ---</div>
+        <div id="marker-info"></div>
+
+        <!-- START: Timeline Visualization HTML -->
+        <div id="timeline-container">
+            <div id="timeline-controls">
+              <!-- Simplified to one row -->
+              <div id="tl-left-group">
+                <button id="tl-play-button">&#9654; Play</button>
+                <button id="tl-pause-button" disabled>&#9208; Pause</button>
+                <label for="tl-speed-slider">Speed:</label>
+                <input type="range" id="tl-speed-slider" min="50" max="1000" step="50" value="200" />
+              </div>
+            
+              <!-- Day Slider moved to center -->
+              <div class="control-group" id="day-slider-group">
+                <input type="range" id="day-slider" title="Time of Day" min="0" max="143" value="0" style="width: 170px;"/>
+                <span id="day-time-display">00:00</span>
+              </div>
+            
+              <!-- Mode Switcher at right -->
+              <div class="control-group" id="tl-mode-switcher">
+                <button id="mode-toggle">Change Mode</button>
+                <span id="mode-display">Mode: Blobs</span>
+              </div>
+            </div>
+            
+            <div id="chart-wrapper">
+                <canvas id="timeline-canvas"></canvas>
+            </div>
+        </div>
+        <!-- END: Timeline Visualization HTML -->
+
+        <!-- RESTORE Original Script Logic -->
+        <script type="module">
+            // ADDING BACK viewer import
+            import "https://cdn.jsdelivr.net/npm/@finos/perspective-viewer@3.4.3/dist/cdn/perspective-viewer.js";
+            import { worker } from "https://cdn.jsdelivr.net/npm/@finos/perspective@3.4.3/dist/cdn/perspective.js";
+
+            const WORKER = await worker();
+            const DATA_FILE_PATH = "mta_map.arrow"; // Back to Arrow
+            
+            let leafletMap = null; 
+            let perspectiveView = null; 
+            let markersLayer = null; 
+            let congestionTable = null; 
+            let baseViewConfig = {}; 
+            let isViewerReady = false; // Add back readiness flag
+            const markerInfoElement = document.getElementById('marker-info'); // Add back element ref
+
+            // --- REMOVE HTML Glow Layer Reference ---
+            // const glowLayer = document.getElementById('glow-layer'); 
+            let glowLayerGroup = null; // Initialize Leaflet layer group later
+
+            const activeGlowElements = {}; // Keep track of elements to remove them // KEEP FOR NOW? May not be needed.
+
+            // Re-add tracking for persistent markers
+            let activeBaseMarkers = {}; // Tracks { locationName: baseMarkerInstance }
+            let activeStaticColorMarkers = {}; // Tracks { locationName: staticColorMarkerInstance }
+
+            let currentMode = 'blobs'; // New state: blobs, emoji, staticColor
+            const modes = ['blobs', 'emoji', 'staticColor'];
+            let isPlaying = false; // Flag for playback state
+
+            // --- Timeline Visualization Variables ---
+            let canvas = null;
+            let ctx = null;
+            let chartWrapper = null;
+            let tlPlayButton = null;
+            let tlPauseButton = null;
+            let tlSpeedSlider = null;
+            let leftLabel = null;
+            let rightLabel = null;
+            let infoText = null;
+            let csvData = []; // Holds [Date, value] pairs
+            let labels = [];  // Holds Date objects
+            let data = [];    // Holds numeric values (entries)
+            const barWidth = 10; 
+            const minutesPerDay = 144; // 24 * 6
+            let currentIndex = 0;
+            let intervalId = null;
+            let isTimePlaying = false; // New flag for time playback
+            let timeIntervalId = null;
+            let daySlider = null; 
+            let dayTimeDisplay = null; 
+            let chartContext = null; // Store canvas context and dimensions
+            // ------------------------------------
+
+            // --- Restore Mode Toggle Variable Declarations ---
+            let modeToggleBtn = null;
+            let modeDisplay = null;
+            // --- OLD Map Control Variable Declarations (Keep Removed) ---
+            // let dateInput = null;
+            // ... rest of commented out vars ...
+            // ----------------------------------------
+
+            // --- Helper for Gate Color ---
+            function getGateColor(entries) {
+                if (entries > 200) return '#d73027'; // Red - Adjusted threshold
+                if (entries > 150) return '#fc8d59';  // Orange - Adjusted threshold
+                if (entries > 100) return '#fee08b';  // Yellow - Adjusted threshold
+                if (entries > 50) return '#91cf60';   // Green - Adjusted threshold
+                return '#888888';                     // Grey for low entries
+            }
+            // --- END Helper ---
+
+            // --- ADD NEW Path Animation Function ---
+            // Rename function to animateIcon and adjust parameters/logic
+            function animateIcon(lat, lon, entries) {
+                // Path lookup removed - animation starts at marker location
+                // const path = gatePaths[locationName];
+                // if (!path || path.length < 2) { 
+                //     return; 
+                // }
+                // const startLatLng = path[0];
+                // const endLatLng = path[path.length - 1]; 
+                const startLatLng = [lat, lon]; // Start at the actual location
+                
+                const params = getBlobParams(entries);
+                const sizePx = parseInt(params.size);
+                const durationMs = parseFloat(params.duration) * 1000;
+                const initialOpacity = params.opacity; 
+
+                // --- Create Icon Content based on Toggle ---
+                let iconHtmlContent;
+                let inlineStyle;
+                let finalIconSizePx = sizePx; // Default to blob size
+                
+                if (showEmoji) {
+                    // Emoji Style - Smaller & Random Upward
+                    const emojiSizePx = Math.max(8, Math.round(sizePx / 10)); // 1/10th size, min 8px
+                    finalIconSizePx = emojiSizePx; // Use smaller size for icon dimensions
+                    
+                    inlineStyle = `
+                        width: ${emojiSizePx}px;
+                        height: ${emojiSizePx}px;
+                        font-size: ${emojiSizePx}px; 
+                        text-align: center;
+                        line-height: ${emojiSizePx}px; 
+                        /* Opacity set via marker.setOpacity() */
+                        pointer-events: none;
+                        color: gold; 
+                    `;
+                    iconHtmlContent = '<span style="text-shadow: 0 0 3px black;">★</span>'; // Star emoji
+                } else {
+                    // Glow Blob Style (Original)
+                    inlineStyle = `
+                        width: ${params.size}; /* Use original blob size */
+                        height: ${params.size};
+                        background-color: ${params.color};
+                        border-radius: 50%;
+                        /* Opacity set via marker.setOpacity() */
+                        filter: blur(10px); 
+                        pointer-events: none;
+                        /* ADD BACK CSS ANIMATION FOR BLOB */
+                        animation: glow-spread ${params.duration} ease-out forwards;
+                        --spread-distance: ${params.spread};
+                    `;
+                    iconHtmlContent = ''; 
+                }
+                // --- End Icon Content ---
+                
+                const blobIcon = L.divIcon({
+                    className: 'leaflet-animated-icon', // Generic class name
+                    html: `<div style="${inlineStyle.replace(/\n\s*/g, '')}">${iconHtmlContent}</div>`,
+                    iconSize: [finalIconSizePx, finalIconSizePx], // Use potentially smaller emoji size
+                    iconAnchor: [finalIconSizePx / 2, finalIconSizePx / 2],
+                });
+
+                // Create marker at START location
+                const marker = L.marker(startLatLng, { 
+                    icon: blobIcon,
+                    keyboard: false, 
+                    interactive: false,
+                    opacity: initialOpacity 
+                }).addTo(glowLayerGroup);
+
+                let startTime = null;
+
+                // Define animation target (random upward for emoji, static for blob)
+                let targetLatLng = startLatLng; // Default target is start (for static blob)
+                if (showEmoji) {
+                    const verticalOffset = 0.01; // Degrees latitude upward
+                    const randomHorizontalOffset = (Math.random() - 0.5) * 0.01; // Degrees longitude (+/- 0.005)
+                    targetLatLng = [startLatLng[0] + verticalOffset, startLatLng[1] + randomHorizontalOffset];
+                }
+
+                function animationStep(timestamp) {
+                    if (!startTime) startTime = timestamp;
+                    const elapsed = timestamp - startTime;
+                    const t = Math.min(elapsed / durationMs, 1); 
+
+                    // --- Animation Logic ---
+                    if (showEmoji) {
+                         // Interpolate position towards target for emoji
+                         const currentLat = startLatLng[0] + (targetLatLng[0] - startLatLng[0]) * t;
+                         const currentLng = startLatLng[1] + (targetLatLng[1] - startLatLng[1]) * t;
+                         marker.setLatLng([currentLat, currentLng]);
+                    } else {
+                        // Glow blob stays in place, just fades
+                    }
+                    
+                    marker.setOpacity(initialOpacity * (1 - t)); // Fade out both types
+                    // --- End Animation Logic ---
+                    
+                    if (t < 1) {
+                        requestAnimationFrame(animationStep);
+                    } else {
+                        // Animation finished, remove marker
+                        if (glowLayerGroup.hasLayer(marker)) {
+                            glowLayerGroup.removeLayer(marker);
+                        }
+                    }
+                }
+
+                // Start the animation
+                requestAnimationFrame(animationStep);
+            }
+            // --- END NEW JS Function ---
+
+            // --- Define Paths for Animation (No longer used by animateIcon) ---
+
+            // --- Define Line Geometries --- (Keep as is)
+            const lineGeometries = {
+                "Lincoln Tunnel": [[40.760567, -74.003000], [40.765999, -74.018600]],
+                "Holland Tunnel": [[40.727800, -74.022896], [40.727295, -74.019780]],
+                "Queensboro Bridge": [[40.760196, -73.961893], [40.752500, -73.947066]],
+                "East 60th St": [[40.764800, -73.972300], [40.762100, -73.966000]]
+            };
+
+            // --- Color Scale Function --- (Keep as is)
+            function getColorForValue(value) {
+                if (value > 5000) return '#d73027'; 
+                if (value > 1000) return '#fc8d59'; 
+                if (value > 500) return '#fee08b'; 
+                if (value > 100) return '#d9ef8b'; 
+                if (value > 20) return '#91cf60';  
+                return '#1a9850'; 
+            }
+
+            // --- Load Arrow Data --- (Restore)
+            async function get_preprocessed_congestion_data() {
+                console.log(`Fetching PREPROCESSED Arrow data from ${DATA_FILE_PATH}`);
+                try {
+                    const resp = await fetch(DATA_FILE_PATH);
+                    if (!resp.ok) {
+                        throw new Error(`HTTP error! status: ${resp.status} while fetching ${DATA_FILE_PATH}`);
+                    }
+                    const arrayBuffer = await resp.arrayBuffer();
+                    console.log("Loading Arrow data into Perspective");
+                    const table = await WORKER.table(arrayBuffer);
+                    console.log("Arrow Data loaded successfully");
+                    return table;
+                } catch (e) {
+                     console.error(`Error fetching or processing data from ${DATA_FILE_PATH}:`, e);
+                     document.getElementById('leaflet-map').innerHTML = `<p style="color: red; padding: 20px;">Error loading data: ${e.message}. Check console.</p>`;
+                     throw e;
+                }
+            }
+            
+            // --- Angle Calculation --- (Keep)
+            function calculateAngle(point1, point2) {
+                const dy = point2[0] - point1[0]; 
+                const dx = point2[1] - point1[1]; 
+                const angleRad = Math.atan2(dy, dx);
+                const angleDeg = angleRad * 180 / Math.PI;
+                return angleDeg - 90; // Use the visually correct formula
+            }
+            
+            // --- Helper to format slider value (Keep)
+            function formatTimeDisplay(sliderValue) {
+                const totalMinutes = sliderValue * 10;
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            }
+            
+            // --- Helper to generate the filter string (Keep)
+            function getTollBlockFilterString(dateStr, sliderValue) {
+                if (!dateStr) return null; 
+                try {
+                    const dateObj = new Date(dateStr + 'T00:00:00Z'); 
+                    if (isNaN(dateObj)) return null; 
+                    const totalMinutes = sliderValue * 10;
+                    dateObj.setUTCMinutes(totalMinutes);
+                    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'UTC' };
+                    let formatted = new Intl.DateTimeFormat('en-US', options).format(dateObj);
+                    formatted = formatted.replace(',', ''); 
+                    return formatted;
+                } catch (e) {
+                    console.error("Error formatting date/time string:", e);
+                    return null;
+                }
+            }
+            
+            // --- Helper function to aggregate data for the timeline (Daily) --- 
+            async function getTimelineData() {
+              if (!congestionTable) {
+                console.error("Cannot get timeline data: congestionTable not ready.");
+                return [];
+              }
+            
+              console.log("Aggregating DAILY data for timeline chart...");
+              // Group by the new DateOnly column
+              const timelineViewConfig = {
+                group_by: ["DateOnly"],
+                columns: ["CRZ_Entries"],
+                aggregates: { "CRZ_Entries": "sum" },
+                sort: [["DateOnly", "asc"]] // Sort by the date string
+                // No need for the null filter here, DateOnly should exist
+              };
+            
+              try {
+                const timelineView = await congestionTable.view(timelineViewConfig);
+                const timelineJson = await timelineView.to_json();
+                await timelineView.delete(); 
+                console.log(`Daily timeline data fetched: ${timelineJson.length} rows.`);
+                // console.log("Daily JSON preview:", timelineJson.slice(0, 5)); 
+
+                // Convert to [Date, value] array, parsing the DateOnly string
+                const dailyData = [];
+                timelineJson.forEach(row => {
+                    if (row.__ROW_PATH__ && row.__ROW_PATH__[0]) {
+                        const dateStr = row.__ROW_PATH__[0]; // Should be 'YYYY-MM-DD'
+                        const totalEntries = row.CRZ_Entries || 0;
+                        
+                        // Parse 'YYYY-MM-DD' string - safer to specify UTC to avoid timezone shift
+                        const dateObj = new Date(dateStr + 'T00:00:00Z'); 
+                        
+                        if (!isNaN(dateObj.getTime())) {
+                            dailyData.push([dateObj, totalEntries]);
+                        } else {
+                             console.warn(`Could not parse DateOnly string: "${dateStr}"`);
+                        }
+                    }
+                });
+
+                // Sorting should already be handled by Perspective query, but double-check just in case
+                dailyData.sort((a, b) => a[0].getTime() - b[0].getTime());
+
+                console.log(`Processed daily timeline data points: ${dailyData.length}`);
+                return dailyData;
+
+              } catch (e) {
+                console.error("Error creating or fetching DAILY timeline view:", e);
+                return [];
+              }
+            }
+            // --- END Timeline Data Helper ---
+
+            // --- applyTimeFilter Function ---
+            async function applyTimeFilter(dateStr, timeBlockVal) {
+                if (!isViewerReady || !congestionTable || !perspectiveView) { 
+                    console.warn("Perspective view/table not ready, skipping update.");
+                    return; 
+                }
+                
+                const targetTimeString = getTollBlockFilterString(dateStr, timeBlockVal);
+                let newFilter = [["latitude", "is not null"]];
+                if (targetTimeString) {
+                    newFilter.push(["Toll_10_Minute_Block", "==", targetTimeString]);
+                } else {
+                    console.warn("Cannot generate time string...");
+                }
+                
+                try {
+                    // --- Revert to Deleting and Recreating the View --- 
+                    if (perspectiveView) { await perspectiveView.delete(); } 
+                    const currentViewConfig = { ...baseViewConfig, filter: newFilter }; 
+                    perspectiveView = await congestionTable.view(currentViewConfig); 
+                    // --- 
+
+                    // console.log("Fetching filtered data..."); // Less verbose
+                    const filteredJson = await perspectiveView.to_json();
+                    // console.log(`Processing ${filteredJson.length} aggregated rows.`); // Less verbose
+                    
+                    const processedLocations = new Set(); // Track locations seen in this timeslice
+
+                    // --- Process Data: Update Persistent Markers, Trigger Transient Animations --- 
+                    filteredJson.forEach(row => {
+                        const locationName = row.__ROW_PATH__ ? row.__ROW_PATH__[0] : 'Unknown'; 
+                        if (locationName === 'Unknown') return;
+                        
+                        processedLocations.add(locationName); // Mark location as seen
+                        const entries = row.CRZ_Entries || 0;
+                        const lat = row.latitude; 
+                        const lon = row.longitude; 
+
+                        if (lat != null && lon != null) {
+                            // --- 1. Update or Create Base Marker (Grey Circle) --- 
+                            if (!activeBaseMarkers[locationName]) {
+                                // Create NEW base marker
+                                const newBaseMarker = L.circleMarker([lat, lon], {
+                                    radius: 6, fillColor: "#555555", color: "#000", 
+                                    weight: 1, opacity: 0.6, fillOpacity: 0.4
+                                });
+                                newBaseMarker.bindPopup(`<b>${locationName}</b><br>Entries: ${entries.toLocaleString()}`);
+                                newBaseMarker.addTo(markersLayer);
+                                newBaseMarker.on('mouseover', (e) => { markerInfoElement.textContent = locationName; });
+                                newBaseMarker.on('mouseout', (e) => { markerInfoElement.textContent = ''; });
+                                activeBaseMarkers[locationName] = newBaseMarker; // Store it
+                            } else {
+                                // Update EXISTING base marker's popup
+                                const existingBaseMarker = activeBaseMarkers[locationName];
+                                existingBaseMarker.setPopupContent(`<b>${locationName}</b><br>Entries: ${entries.toLocaleString()}`);
+                                // Optional: Update position if needed
+                                // existingBaseMarker.setLatLng([lat, lon]); 
+                            }
+                            // --- End Base Marker --- 
+
+                            // --- 2. Handle Visuals based on Mode --- 
+                            if (currentMode === 'staticColor') {
+                                // Update or Create/Remove Static Color Marker
+                                const staticColor = getGateColor(entries); // Gets grey if entries = 0
+                                const existingStaticMarker = activeStaticColorMarkers[locationName];
+
+                                if (entries > 0) {
+                                    if (!existingStaticMarker) {
+                                        // Create NEW static marker
+                                        const newStaticMarker = L.circleMarker([lat, lon], {
+                                            radius: 8, fillColor: staticColor, color: "#000", 
+                                            weight: 1, opacity: 0.8, fillOpacity: 0.7,
+                                            interactive: false 
+                                        }).addTo(markersLayer);
+                                        activeStaticColorMarkers[locationName] = newStaticMarker;
+                                    } else {
+                                        // Update EXISTING static marker's color and position
+                                        existingStaticMarker.setStyle({ fillColor: staticColor });
+                                        // Optional: Update position if needed
+                                        // existingStaticMarker.setLatLng([lat, lon]);
+                                    }
+                                } else { // entries === 0 for static mode
+                                    if (existingStaticMarker) {
+                                        // Remove existing static marker if entries drop to 0
+                                        markersLayer.removeLayer(existingStaticMarker);
+                                        delete activeStaticColorMarkers[locationName];
+                                    }
+                                    // Do nothing if no marker exists and entries are 0
+                                }
+                            } else { // Blobs or Emoji mode (Transient animations)
+                                // Trigger a NEW animation if entries > 0
+                                if (entries > 0) {
+                                    createAndAnimateVisual(lat, lon, entries); 
+                                }
+                                // No need to handle entries === 0 here, animations self-destruct
+                            }
+                            // --- End Visuals Handling ---
+                        } 
+                    }); 
+                    // --- End Processing Data --- 
+                    
+                    // --- Add Stale Marker Cleanup for markersLayer --- 
+                    // console.log("Checking for stale persistent markers...");
+                    for (const locationName in activeBaseMarkers) {
+                        if (!processedLocations.has(locationName)) {
+                            // console.log(`Removing stale BASE marker for ${locationName}`);
+                            const baseMarkerToRemove = activeBaseMarkers[locationName];
+                            if (markersLayer.hasLayer(baseMarkerToRemove)) {
+                                markersLayer.removeLayer(baseMarkerToRemove);
+                            }
+                            delete activeBaseMarkers[locationName];
+                            
+                            // Also remove corresponding static marker if it exists
+                            const staticMarkerToRemove = activeStaticColorMarkers[locationName];
+                            if (staticMarkerToRemove && markersLayer.hasLayer(staticMarkerToRemove)){
+                                markersLayer.removeLayer(staticMarkerToRemove);
+                                delete activeStaticColorMarkers[locationName];
+                            }
+                        }
+                    }
+                    // --- End Stale Marker Cleanup ---
+
+                } catch (e) {
+                    console.error("Error applying filter or updating Leaflet map:", e);
+                    // Stop playback on error
+                    if (isPlaying && pauseButton) { 
+                        console.log("Stopping playback due to error in applyTimeFilter.");
+                        pauseButton.click(); 
+                    }
+                }
+            }
+            // --- Initialize Map and Load Data --- (Restore `load` function)
+            async function load() {
+                console.log("--- Starting load() function ---");
+                try {
+                    // Initialize Leaflet Map
+                    console.log("Initializing Leaflet map...");
+                    leafletMap = L.map('leaflet-map').setView([40.7128, -74.0060], 11); 
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                        subdomains: 'abcd',
+                        maxZoom: 19
+                    }).addTo(leafletMap);
+                    markersLayer = L.layerGroup().addTo(leafletMap); // For grey circles
+                    glowLayerGroup = L.layerGroup().addTo(leafletMap); // For time-based glow markers
+                    console.log("Leaflet map and layer groups initialized.");
+
+                    // Add Mousemove Listener for Coordinates (Restore)
+                    const coordDisplayElement = document.getElementById('coord-display');
+                    if (coordDisplayElement) { // Add check in case element isn't ready?
+                      leafletMap.on('mousemove', function(e) {
+                          const lat = e.latlng.lat.toFixed(6); 
+                          const lng = e.latlng.lng.toFixed(6);
+                          coordDisplayElement.textContent = `Lat: ${lat}, Lng: ${lng}`;
+                      });
+                      leafletMap.on('mouseout', function() { 
+                          coordDisplayElement.textContent = `Lat: ---, Lng: ---`;
+                      });
+                    }
+
+                    // Load Arrow Data into Perspective Table
+                    console.log("Attempting to load PREPROCESSED Arrow data...");
+                    congestionTable = await get_preprocessed_congestion_data();
+                    console.log("Preprocessed Arrow data loaded into 'congestionTable'.");
+
+                    // Define Base View Config 
+                    console.log("Defining base Perspective view config...");
+                    baseViewConfig = {
+                        group_by: ["Detection_Group"],
+                        columns: ["longitude", "latitude", "CRZ_Entries"],
+                        aggregates: { "longitude": "avg", "latitude": "avg", "CRZ_Entries": "sum" },
+                        filter: [["latitude", "is not null"]]
+                    };
+                    
+                    // --- Create Perspective View ONCE --- 
+                    console.log("Creating Perspective view...");
+                    perspectiveView = await congestionTable.view(baseViewConfig);
+                    console.log("Perspective view created.");
+                    // --- 
+
+                    isViewerReady = true; 
+                    console.log("Perspective Table and View are ready. Initializing controls."); 
+
+                    // REMOVE initial filter call - timeline init handles it now
+                    /*
+                    const dateInput = document.getElementById("date-input");
+                    const timeSlider = document.getElementById("time-slider");
+                    if (dateInput && timeSlider) { 
+                      dateInput.value = '2025-01-05'; 
+                      console.log(`Applying initial filter for date: ${dateInput.value}`);
+                      await applyTimeFilter(dateInput.value, parseInt(timeSlider.value)); 
+                    } else {
+                        console.error("Could not find date/time input elements for initial filter.");
+                    }
+                    */
+                    
+                    console.log("--- load() function completed successfully! --- ");
+
+                    // --- Initialize Timeline Visualization ---
+                    console.log("Initializing timeline visualization...");
+                    canvas = document.getElementById('timeline-canvas');
+                    ctx = canvas.getContext('2d');
+                    chartWrapper = document.getElementById('chart-wrapper');
+                    tlPlayButton = document.getElementById('tl-play-button');
+                    tlPauseButton = document.getElementById('tl-pause-button');
+                    tlSpeedSlider = document.getElementById('tl-speed-slider');
+                    leftLabel = document.getElementById('tl-left-label');
+                    rightLabel = document.getElementById('tl-right-label');
+                    infoText = document.getElementById('tl-info-text');
+
+                    if (!canvas || !chartWrapper || !tlPlayButton || !tlPauseButton || !tlSpeedSlider || !leftLabel || !rightLabel || !infoText) {
+                        console.error("FATAL: Could not find all timeline visualization elements!");
+                        return; // Stop if essential elements are missing
+                    }
+
+                    // Fetch data for the timeline
+                    csvData = await getTimelineData();
+                    // --- DEBUG: Log parsed CSV data sample ---
+                    console.log("Parsed CSV Data sample:", csvData.slice(0, 5));
+                    
+                    if (!csvData || csvData.length === 0) {
+                        console.error("FATAL: No data returned for timeline visualization!");
+                        infoText.textContent = "Error loading timeline data.";
+                        return; // Stop if no data
+                    }
+
+                    labels = csvData.map(([ts]) => ts);
+                    data = csvData.map(([, v]) => v);
+
+                    // --- DEBUG: Check label spacing ---
+                    console.log("Checking label spacing...");
+                    let consistentSpacing = true;
+                    for (let i = 1; i < labels.length; i++) {
+                        if (!labels[i] || !labels[i-1]) continue; // Skip if dates are invalid
+                        const diff = (labels[i].getTime() - labels[i - 1].getTime()) / 60000; // difference in minutes
+                        if (diff !== 10) {
+                            console.warn(`Unexpected gap between labels[${i - 1}] (${labels[i-1].toISOString()}) and labels[${i}] (${labels[i].toISOString()}): ${diff} minutes`);
+                            consistentSpacing = false;
+                        }
+                    }
+                    if (consistentSpacing) {
+                         console.log("Label spacing appears consistent (10 minutes).");
+                    }
+                    console.log(`Total labels processed: ${labels.length}`); 
+                    // --- DEBUG: Log data sample ---
+                    console.log(`Data array length: ${data.length}`);
+                    console.log("Data sample (first 10):", data.slice(0, 10));
+                    // --- END DEBUG ---
+
+                    // --- Setup Canvas and Store Context --- 
+                    chartContext = setupCanvas(csvData); // Call setupCanvas with the daily data
+                    if (!chartContext) {
+                        console.error("FATAL: Failed to setup timeline canvas!");
+                        infoText.textContent = "Error initializing timeline chart.";
+                        return; // Stop if canvas setup fails
+                    }
+                    // canvas and ctx are now part of chartContext
+                    canvas = document.getElementById('timeline-canvas'); // Still might need direct ref?
+                    chartWrapper = document.getElementById('chart-wrapper'); // Keep direct wrapper ref
+                    // --- End Canvas Setup --- 
+                    
+                    // --- Helper to convert slider value (logarithmic feel)
+                    function convertSliderToSpeed(sliderVal) {
+                        // Simple inverse: smaller slider value = faster (smaller interval)
+                        return 1050 - sliderVal; // Adjust 1050 base as needed
+                    }
+
+                    // --- Function to Start Time-of-Day Playback ---
+                    function startTimePlayback() {
+                        if (isTimePlaying || !chartContext || labels.length === 0) return;
+                        
+                        const dateForPlayback = labels[currentIndex]; // Get the currently selected date
+                        if (!dateForPlayback || !(dateForPlayback instanceof Date) || isNaN(dateForPlayback)) {
+                            console.error("Cannot start time playback: Invalid date selected on main timeline.", currentIndex, labels[currentIndex]);
+                            return;
+                        }
+                        const dateStr = dateForPlayback.toISOString().split('T')[0];
+                        
+                        console.log(`Starting TIME playback for date: ${dateStr}`);
+                        isTimePlaying = true;
+                        tlPlayButton.disabled = true;
+                        tlPauseButton.disabled = false;
+
+                        clearInterval(timeIntervalId); // Ensure no previous interval is running
+
+                        const intervalDelay = convertSliderToSpeed(tlSpeedSlider.value);
+                        
+                        timeIntervalId = setInterval(() => {
+                            let currentDaySliderValue = parseInt(daySlider.value);
+                            currentDaySliderValue = (currentDaySliderValue + 1) % 144; // Increment and loop (0-143)
+                            daySlider.value = currentDaySliderValue;
+                            dayTimeDisplay.textContent = formatTimeDisplay(currentDaySliderValue);
+                            
+                            // Apply filter for the *fixed date* and *incrementing time*
+                            applyTimeFilter(dateStr, currentDaySliderValue);
+                            
+                        }, intervalDelay);
+                    }
+                    // --- END startTimePlayback ---
+
+                    // --- Function to Stop Time-of-Day Playback ---
+                    function stopTimePlayback() {
+                        if (!isTimePlaying) return;
+                        console.log("Stopping TIME playback...");
+                        clearInterval(timeIntervalId);
+                        timeIntervalId = null;
+                        isTimePlaying = false;
+                        tlPlayButton.disabled = false;
+                        tlPauseButton.disabled = true;
+                    }
+                    // --- END stopTimePlayback ---
+
+                    // --- Enhanced updateChart function (for Daily Data) ---
+                    function updateChart(highlightIndex = -1, updateMap = false) {
+                        const canvasInfo = chartContext; 
+                        if (!canvasInfo || !canvasInfo.ctx || !canvasInfo.canvasWidth || !canvas || data.length === 0) { 
+                            console.error("updateChart: Missing canvas context or data.");
+                            return; 
+                        }
+                        const { ctx, canvasWidth, canvasHeight: logicalCanvasHeight, barWidth: totalBarWidth, actualBarWidth, totalBars } = canvasInfo;
+
+                        // --- FIX: Clear and Fill Background --- 
+                        // Use the logical canvas dimensions for clearing and filling
+                        ctx.fillStyle = '#2a2a2a'; // Match the wrapper background color
+                        ctx.fillRect(0, 0, canvasWidth, logicalCanvasHeight);
+                        // ctx.clearRect(0, 0, canvasWidth, logicalCanvasHeight); // Don't need clearRect if filling background
+                        // --- END FIX --- 
+                        
+                        // Add check for data validity (optional, but good practice)
+                        const hasInvalidData = data.some(val => !Number.isFinite(val) || val < 0);
+                        if (hasInvalidData) {
+                            console.warn("WARNING: Timeline 'data' array contains non-finite or negative values.");
+                        }
+                    
+                        // Calculate max based only on valid, positive numbers
+                        const maxVal = Math.max(...data.filter(val => Number.isFinite(val) && val > 0), 1); 
+                        // const logicalCanvasHeight = canvasHeight; // Already destructured
+                        
+                        // Limit logging 
+                        const logIndices = new Set([0, 1, 2]); 
+                        if (highlightIndex >= 0 && highlightIndex < totalBars) logIndices.add(highlightIndex);
+                    
+                        data.forEach((val, i) => {
+                            if (i >= totalBars) return; // Ensure we don't try to draw beyond allocated bars
+
+                            const isValidValue = Number.isFinite(val) && val >= 0;
+                            const currentVal = isValidValue ? val : 0; 
+                    
+                            const logicalBarHeight = Math.max(0, (currentVal / maxVal) * logicalCanvasHeight);
+                            
+                            // Daily view: Highlight is white, default is subtle grey
+                            ctx.fillStyle = i === highlightIndex ? '#ffffff' : '#aaaaaa'; 
+                            
+                            // Calculate x using totalBarWidth (includes spacing)
+                            const x = i * totalBarWidth;
+                            // Calculate y based on logical height
+                            const y = logicalCanvasHeight - logicalBarHeight; 
+                            // Use actualBarWidth for the visible bar width
+                            const barDrawingWidth = actualBarWidth; 
+                            const barDrawingHeight = logicalBarHeight; 
+                    
+                            // Optional: Detailed logging before drawing
+                            if (logIndices.has(i)) { 
+                                // console.log(`Draw Bar ${i}: val=${val?.toFixed(0)}, max=${maxVal.toFixed(0)}, logH=${logicalBarHeight.toFixed(2)} | fillRect(x=${x.toFixed(2)}, y=${y.toFixed(2)}, w=${barDrawingWidth.toFixed(2)}, h=${barDrawingHeight.toFixed(2)}), style=${ctx.fillStyle}`);
+                            }
+                            
+                            // Draw using logical coordinates and dimensions
+                            if (barDrawingHeight > 0 && barDrawingWidth > 0) { 
+                                 ctx.fillRect(x, y, barDrawingWidth, barDrawingHeight);
+                            } else if (logIndices.has(i) && (barDrawingHeight <= 0 || barDrawingWidth <= 0)) {
+                                 // console.log(`Draw Bar ${i}: Skipped fillRect due to zero/negative height/width.`);
+                            }
+                        });
+                    
+                        // --- Update Labels and Info Text --- 
+                        const viewWidth = chartWrapper.clientWidth;
+                        const scrollLeft = chartWrapper.scrollLeft;
+                        const firstVisibleIndex = Math.max(0, Math.min(Math.floor(scrollLeft / totalBarWidth), labels.length - 1));
+                        const lastVisibleIndex = Math.max(0, Math.min(Math.floor((scrollLeft + viewWidth) / totalBarWidth) -1 , labels.length - 1));
+                        
+                        // Format Date for labels (e.g., Jan 05)
+                        const dateFormatOptions = { month: 'short', day: 'numeric', timeZone: 'UTC' }; // Display UTC date
+                        leftLabel.textContent = labels[firstVisibleIndex]?.toLocaleDateString('en-US', dateFormatOptions) || '';
+                        rightLabel.textContent = labels[lastVisibleIndex]?.toLocaleDateString('en-US', dateFormatOptions) || '';
+                    
+                        // Determine index for info text (prioritize highlight, else use center)
+                        const centerIndex = Math.max(0, Math.min(Math.floor((scrollLeft + viewWidth / 2) / totalBarWidth), labels.length - 1));
+                        const indexToUse = (highlightIndex >= 0 && highlightIndex < labels.length) ? highlightIndex : centerIndex; 
+                    
+                        if (labels[indexToUse]) {
+                              const entryValue = (indexToUse < data.length && Number.isFinite(data[indexToUse])) ? data[indexToUse].toLocaleString() : 'N/A';
+                              infoText.textContent = `${labels[indexToUse].toLocaleDateString('en-US', dateFormatOptions)} - ${entryValue} entries`;
+                    
+                              // --- Update Map Filter if Requested --- 
+                              if (updateMap) {
+                                  const dateForMap = labels[indexToUse];
+                                  if (dateForMap instanceof Date && !isNaN(dateForMap)){
+                                      const dateStr = dateForMap.toISOString().split('T')[0]; // Get YYYY-MM-DD
+                                      const timeBlockVal = parseInt(daySlider.value); // Use the daySlider's current value!
+                                      
+                                      console.log(`Timeline requesting map update for Date: ${dateStr}, Time Block Val: ${timeBlockVal} (from daySlider)`); 
+                                      applyTimeFilter(dateStr, timeBlockVal);
+                                  } else {
+                                      console.warn(`Cannot update map: Invalid date found at index ${indexToUse}`);
+                                  }
+                             }
+                        } else {
+                             console.warn(`Label not found for index: ${indexToUse}`); 
+                             infoText.textContent = '';
+                        }
+                    }
+                    // --- END updateChart (Daily) ---
+                    
+                    // --- Timeline Event Listeners (Updated for Time Playback) ---
+                    tlPlayButton.addEventListener('click', startTimePlayback); // Use new function
+
+                    tlPauseButton.addEventListener('click', stopTimePlayback); // Use new function
+
+                    tlSpeedSlider.addEventListener('input', () => {
+                        if (!chartContext) return; 
+                        
+                        const newSpeed = convertSliderToSpeed(tlSpeedSlider.value);
+                        console.log(`Speed slider changed. New interval delay: ${newSpeed}ms`);
+                        // If time is currently playing, restart the interval with the new speed
+                        if (isTimePlaying) {
+                            startTimePlayback(); // Restarting handles clearing old interval and using new speed
+                        }
+                    });
+
+                    // Debounced scroll listener (Daily Adjusted + Stop Time Playback)
+                    let scrollTimeout;
+                    chartWrapper.addEventListener('scroll', () => {
+                      if (!chartContext) return; 
+                       const { barWidth: totalBarWidth } = chartContext;
+
+                      // Stop time playback immediately if user scrolls the main timeline
+                      if (isTimePlaying) stopTimePlayback(); 
+
+                      updateChart(-1, false); // Update labels immediately, don't update map yet
+                      clearTimeout(scrollTimeout);
+                      scrollTimeout = setTimeout(() => {
+                        // Update map after scrolling stops (using totalBarWidth)
+                        const scrollCenter = chartWrapper.scrollLeft + chartWrapper.clientWidth / 2;
+                        const centerIndex = Math.max(0, Math.min(Math.floor(scrollCenter / totalBarWidth), labels.length - 1));
+                        console.log(`Scroll ended, updating map to daily index: ${centerIndex}`);
+                        currentIndex = centerIndex; // Update the current day index
+                        // updateChart now handles getting daySlider value for the map update
+                        updateChart(currentIndex, true); 
+                      }, 250); 
+                    });
+
+                    // Click listener (Daily Adjusted + Stop Time Playback)
+                    canvas.addEventListener('click', (event) => {
+                        if (!chartContext) return; 
+                         const { barWidth: totalBarWidth } = chartContext;
+
+                        // Stop time playback if user clicks the main timeline
+                        if (isTimePlaying) stopTimePlayback(); 
+
+                        const rect = canvas.getBoundingClientRect();
+                        const x = event.clientX - rect.left;
+                        const index = Math.floor(x / totalBarWidth);
+                        if (index >= 0 && index < data.length) {
+                            currentIndex = index; // Update the current day index
+                            console.log(`Canvas clicked, updating map to daily index: ${index}`);
+                            // updateChart now handles getting daySlider value for the map update
+                            updateChart(currentIndex, true); 
+                        }
+                    });
+                    // --- End Timeline Event Listeners ---
+
+                    // --- Day Slider Listener (Stop Time Playback + Debounce) ---
+                    daySlider = document.getElementById('day-slider');
+                    dayTimeDisplay = document.getElementById('day-time-display');
+                    if (daySlider && dayTimeDisplay) {
+                        let daySliderTimeout; // Variable for debounce timer
+                        daySlider.addEventListener('input', () => {
+                            // Stop time playback if user manually moves the day slider
+                            if (isTimePlaying) stopTimePlayback();
+
+                            const sliderValue = parseInt(daySlider.value);
+                            dayTimeDisplay.textContent = formatTimeDisplay(sliderValue); // Update display immediately
+
+                            // Debounce the map update
+                            clearTimeout(daySliderTimeout);
+                            daySliderTimeout = setTimeout(() => {
+                                // Determine the current date from the main timeline's position
+                                const currentTimelineIndex = currentIndex; 
+                                const datePartSource = labels[currentTimelineIndex] || (labels.length > 0 ? labels[0] : new Date()); 
+                                let dateStr = '2025-01-05'; // Default fallback
+                                if (datePartSource instanceof Date && !isNaN(datePartSource)) {
+                                    dateStr = datePartSource.toISOString().split('T')[0];
+                                } else {
+                                    console.warn("Could not determine current date from timeline for daySlider update, using default.");
+                                }
+                                
+                                // Apply filter using the current day and the new slider time value
+                                console.log(`Day slider settled: Updating map to ${dateStr}, sliderVal ${sliderValue}`);
+                                applyTimeFilter(dateStr, sliderValue);
+
+                                // NO LONGER NEED to scroll main timeline based on daySlider value 
+                                /* 
+                                const targetMainIndex = labels.findIndex(...);
+                                if (targetMainIndex !== -1) { ... } 
+                                */
+                            }, 250); // Debounce delay (milliseconds)
+                        });
+                    } else {
+                        console.error("Could not find Day Slider elements!");
+                    }
+                    // --- END Day Slider Listener ---
+
+                    // Initial Draw - Delay slightly to ensure map state is ready
+                    setTimeout(() => {
+                        console.log("Performing initial timeline draw and map sync...");
+                        updateChart(-1, true); // Draw initial state and update map to match center
+                    }, 50); // Use a 50ms delay as suggested
+
+                    // --- Add Resize Listener ---
+                    window.addEventListener('resize', () => {
+                        // Note: Rescaling canvas on resize can be complex if you need
+                        // to preserve drawing state. For now, just redraw.
+                        console.log("Window resized - Re-setting canvas and redrawing timeline chart");
+                        // We might need to re-calculate scale and re-apply ctx.scale here
+                        // if devicePixelRatio changes (e.g., moving between monitors)
+                        // For simplicity, just call updateChart for now.
+                        updateChart(currentIndex, false); 
+                    });
+                    // --- END Resize Listener ---
+
+                } catch(e) {
+                     console.error("--- ERROR during load() function --- ", e);
+                     document.getElementById('leaflet-map').innerHTML = `<p style="color: red; padding: 20px;">Error during data load/processing: ${e.message}. Check console.</p>`;
+                }
+            }
+            
+            // --- REMOVE updateStaticGates Function --- 
+            /*
+            function updateStaticGates(currentData) {
+// ... (rest of old function) ...
+            }
+            */
+            // --- END REMOVED Static Gate Function ---
+
+            // --- RESTORE Blob Params Helper ---
+            // Remove the surrounding /* and */ to uncomment
+            const getBlobParams = (entries) => {
+                // Keep thresholds consistent with getGateColor
+                if (entries > 200) return { size: '70px', opacity: 0.8, duration: '7s', spread: '120px' }; // Red tier
+                if (entries > 150) return { size: '60px', opacity: 0.7, duration: '6s', spread: '100px' }; // Orange tier
+                if (entries > 100) return { size: '50px', opacity: 0.6, duration: '5s', spread: '80px' }; // Yellow tier
+                if (entries > 0)  return { size: '40px', opacity: 0.5, duration: '4s', spread: '60px' }; // Green tier
+                // Low entries - use smaller size for blob/emoji, but maybe still visible for static?
+                return { size: '30px', opacity: 0.4, duration: '3s', spread: '40px' }; // Low tier (grey color used elsewhere)
+            };
+            // --- END Helper ---
+
+            // --- Simple Revenue Calculation Helper ---
+            const calculateRevenue = (entries) => entries * 9; // Simplified $9 per entry
+            // --- END Helper ---
+
+            // --- NEW Animation Function (Replaces createOrUpdateVisual) ---
+            function createAndAnimateVisual(lat, lon, entries) {
+                const params = getBlobParams(entries); // Get params for blob/emoji modes
+                const sizePx = parseInt(params.size);
+                const durationMs = parseFloat(params.duration) * 1000;
+                const initialOpacity = params.opacity;
+
+                let iconHtmlContent = '';
+                let inlineStyle = '';
+                let finalIconSizePx = sizePx; 
+                let useJsAnimation = false;
+                let animationTarget = null;
+                let markerClassName = 'leaflet-transient-visual'; // Class for temporary visuals
+
+                // --- Determine Icon Style based on currentMode (Blobs or Emoji) --- 
+                if (currentMode === 'emoji') {
+                    useJsAnimation = true;
+                    const emojiSizePx = Math.max(8, Math.round(sizePx / 10)); 
+                    finalIconSizePx = emojiSizePx;
+                    markerClassName += ' leaflet-emoji-icon';
+                    inlineStyle = `width: auto; height: ${emojiSizePx}px; font-size: ${emojiSizePx}px; text-align: center; line-height: ${emojiSizePx}px; pointer-events: none; color: gold; white-space: nowrap;`;
+                    const revenue = calculateRevenue(entries);
+                    const revenueString = `$${(revenue/1000).toFixed(1)}k`; 
+                    iconHtmlContent = `<span style="text-shadow: 0 0 3px black; font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;">&#128176;${revenueString}</span>`;
+                    const verticalOffset = 0.01; 
+                    const randomHorizontalOffset = (Math.random() - 0.5) * 0.01;
+                    animationTarget = [lat + verticalOffset, lon + randomHorizontalOffset];
+                } else { // Default to Blobs mode
+                    markerClassName += ' leaflet-blob-icon';
+                    inlineStyle = `width: ${params.size}; height: ${params.size}; background-color: ${getGateColor(entries)}; border-radius: 50%; filter: blur(10px); pointer-events: none; animation: glow-spread ${params.duration} ease-out forwards; --spread-distance: ${params.spread};`;
+                    // Opacity handled by CSS animation for blobs
+                }
+                // --- End Determine Icon Style --- 
+                
+                // --- Create the Icon Definition --- 
+                const visualIcon = L.divIcon({
+                    className: markerClassName,
+                    html: `<div style="${inlineStyle.replace(/\n\s*/g, '')}">${iconHtmlContent}</div>`,
+                    iconSize: (currentMode === 'emoji') ? null : [finalIconSizePx, finalIconSizePx], 
+                    iconAnchor: [finalIconSizePx / 2, finalIconSizePx / 2], 
+                });
+                // --- End Icon Definition --- 
+
+                // --- CREATE NEW MARKER (Always new for this approach) --- 
+                const marker = L.marker([lat, lon], { 
+                    icon: visualIcon,
+                    keyboard: false, 
+                    interactive: false,
+                    opacity: (currentMode !== 'blobs') ? initialOpacity : 1.0 
+                }).addTo(glowLayerGroup); // Add to the persistent glow layer
+
+                // --- Animation & SELF-REMOVAL Logic ---
+                if (useJsAnimation && animationTarget) {
+                    // JS Animation for Emoji with Self-Removal
+                    let startTime = null;
+                    function animationStep(timestamp) {
+                        if (!startTime) startTime = timestamp;
+                        const elapsed = timestamp - startTime;
+                        const t = Math.min(elapsed / durationMs, 1); 
+                        const currentLat = lat + (animationTarget[0] - lat) * t;
+                        const currentLng = lon + (animationTarget[1] - lon) * t;
+                        
+                        // Check if marker still exists before updating
+                        if (!glowLayerGroup.hasLayer(marker)) return; 
+                        
+                        marker.setLatLng([currentLat, currentLng]);
+                        marker.setOpacity(initialOpacity * (1 - t)); 
+                        
+                        if (t < 1) {
+                            requestAnimationFrame(animationStep);
+                        } else {
+                            // Animation finished, remove THIS marker
+                            if (glowLayerGroup.hasLayer(marker)) {
+                                glowLayerGroup.removeLayer(marker);
+                            }
+                        }
+                    }
+                    requestAnimationFrame(animationStep);
+                } else if (currentMode === 'blobs'){
+                    // Timeout Removal for CSS-Animated Blobs
+                    setTimeout(() => {
+                        if (glowLayerGroup.hasLayer(marker)) {
+                           glowLayerGroup.removeLayer(marker);
+                        }
+                    }, durationMs); 
+                }
+                // --- End Animation/Removal --- 
+            }
+            // --- END New Animation Function ---
+
+            // --- Add NEW Single Mode Toggle Logic ---
+            modeToggleBtn = document.getElementById("mode-toggle");
+            modeDisplay = document.getElementById("mode-display");
+            if (modeToggleBtn && modeDisplay) {
+                modeToggleBtn.addEventListener('click', async () => {
+                    const previousMode = currentMode; // Store previous mode
+                    let currentModeIndex = modes.indexOf(currentMode);
+                    currentModeIndex = (currentModeIndex + 1) % modes.length;
+                    currentMode = modes[currentModeIndex];
+                    modeDisplay.textContent = `Mode: ${currentMode.charAt(0).toUpperCase() + currentMode.slice(1)}`;
+                    console.log("Mode changed from", previousMode, "to:", currentMode);
+                    
+                    // --- Cleanup if switching AWAY from staticColor mode ---
+                    if (previousMode === 'staticColor' && currentMode !== 'staticColor') {
+                        console.log("Cleaning up static color markers...");
+                        for (const locationName in activeStaticColorMarkers) {
+                            const markerToRemove = activeStaticColorMarkers[locationName];
+                            if (markersLayer.hasLayer(markerToRemove)) {
+                                markersLayer.removeLayer(markerToRemove);
+                            }
+                        }
+                        activeStaticColorMarkers = {}; // Clear the tracking object
+                    }
+                    // --- End Cleanup ---
+
+                    // Rerun filter to apply new mode visuals
+                    // Get current date/time from the timeline's state
+                    console.log("Mode changed, re-applying filter based on timeline index:", currentIndex);
+                    if (labels[currentIndex]) { // Check if current index and label are valid
+                        const dateForMap = labels[currentIndex];
+                        const dateStr = dateForMap.toISOString().split('T')[0];
+                        const minutes = dateForMap.getUTCHours() * 60 + dateForMap.getUTCMinutes();
+                        const sliderVal = Math.floor(minutes / 10);
+                        await applyTimeFilter(dateStr, sliderVal);
+                    } else {
+                        console.error("Could not get valid date/time from timeline state for mode toggle update.");
+                    }
+                });
+            }
+            // --- End Single Mode Toggle Logic ---
+
+            // --- Move setupCanvas function definition earlier ---
+            function setupCanvas(data) {
+                const canvas = document.getElementById('timeline-canvas');
+                const ctx = canvas.getContext('2d');
+                if (!canvas || !ctx || !data || data.length === 0) { 
+                    console.error('Failed to get canvas/context or data is empty for setupCanvas');
+                    return null;
+                }
+    
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+    
+                // --- Configuration for Daily Bars ---
+                const barWidth = 10; // Width of the actual bar color - INCREASED
+                const barSpacing = 2; // Space between bars - INCREASED
+                const totalBarWidth = barWidth + barSpacing; // Total space allocated per bar
+                const canvasHeight = 100; // Fixed logical height
+                
+                // Calculate width based on the number of days (data.length)
+                const canvasWidth = Math.max(2000, data.length * totalBarWidth); // Ensure minimum width
+                // --- End Configuration ---
+    
+                // Set internal canvas size (scaled by DPR)
+                canvas.width = Math.round(canvasWidth * dpr);
+                canvas.height = Math.round(canvasHeight * dpr);
+    
+                // Set CSS size (actual display size)
+                canvas.style.width = `${canvasWidth}px`;
+                canvas.style.height = `${canvasHeight}px`;
+    
+                // Scale the context
+                ctx.scale(dpr, dpr);
+    
+                console.log(`Canvas setup complete (Daily). Width: ${canvasWidth}px (${data.length} days @ ${totalBarWidth}px each)`);
+                
+                // Clear canvas initially
+                ctx.fillStyle = '#2a2a2a';
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    
+                // Return totalBarWidth as 'barWidth' for updateChart logic, plus other needed params
+                return { ctx, canvasWidth, canvasHeight, barWidth: totalBarWidth, totalBars: data.length, actualBarWidth: barWidth }; 
+            }
+            // --- End setupCanvas function ---
+
+            load(); // Call load function
+
+        </script>
+    </body>
+</html> 

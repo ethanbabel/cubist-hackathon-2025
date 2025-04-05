@@ -1,0 +1,227 @@
+{
+    "Raw Data Grid": {
+        "sizes": [1],
+        "detail": {
+            "main": {
+                "type": "tab-area",
+                "widgets": ["PERSPECTIVE_GENERATED_ID_1"],
+                "currentIndex": 0
+            }
+        },
+        "mode": "globalFilters",
+        "viewers": {
+            "PERSPECTIVE_GENERATED_ID_1": {
+                "plugin": "Datagrid",
+                "plugin_config": {
+                    "columns": {},
+                    "editable": false,
+                    "scroll_lock": false
+                },
+                "settings": true,
+                "title": "Raw Data",
+                "group_by": [],
+                "split_by": [],
+                "columns": [
+                    "Toll Date",
+                    "Toll Hour",
+                    "Toll 10 Minute Block",
+                    "Minute of Hour",
+                    "Hour of Day",
+                    "Day of Week Int",
+                    "Day of Week",
+                    "Toll Week",
+                    "Time Period",
+                    "Vehicle Class",
+                    "Detection Group",
+                    "Detection Region",
+                    "CRZ Entries",
+                    "Excluded Roadway Entries"
+                ],
+                "filter": [],
+                "sort": [],
+                "expressions": {},
+                "aggregates": {},
+                "master": false,
+                "table": "mta",
+                "linked": false
+            }
+        }
+    },
+    "Bar Chart - Traffic by Location": {
+        "sizes": [1],
+        "detail": {
+            "main": {
+                "type": "tab-area",
+                "widgets": ["PERSPECTIVE_GENERATED_ID_10"],
+                "currentIndex": 0
+            }
+        },
+        "mode": "globalFilters",
+        "viewers": {
+            "PERSPECTIVE_GENERATED_ID_10": {
+                "plugin": "Y Bar",
+                "plugin_config": {},
+                "settings": true,
+                "title": "Traffic by Detection Group",
+                "group_by": ["Detection Group"],
+                "split_by": ["Vehicle Class"],
+                "columns": ["CRZ Entries"],
+                "filter": [],
+                "sort": [["CRZ Entries", "desc"]],
+                "expressions": {},
+                "aggregates": { "CRZ Entries": "sum" },
+                "master": false,
+                "table": "mta",
+                "linked": false
+            }
+        }
+    },
+    "Line Chart - Hourly Traffic": {
+        "sizes": [1],
+        "detail": {
+            "main": {
+                "type": "tab-area",
+                "widgets": ["PERSPECTIVE_GENERATED_ID_11"],
+                "currentIndex": 0
+            }
+        },
+        "mode": "globalFilters",
+        "viewers": {
+            "PERSPECTIVE_GENERATED_ID_11": {
+                "plugin": "Y Line",
+                "plugin_config": {},
+                "settings": true,
+                "title": "Hourly Traffic",
+                "group_by": ["Hour of Day"],
+                "split_by": ["Day of Week"],
+                "columns": ["CRZ Entries"],
+                "filter": [],
+                "sort": [],
+                "expressions": {},
+                "aggregates": { "CRZ Entries": "sum" },
+                "master": false,
+                "table": "mta",
+                "linked": false
+            }
+        }
+    },
+    "Heatmap - Traffic by Day and Hour": {
+        "sizes": [1],
+        "detail": {
+            "main": {
+                "type": "tab-area",
+                "widgets": ["PERSPECTIVE_GENERATED_ID_12"],
+                "currentIndex": 0
+            }
+        },
+        "mode": "globalFilters",
+        "viewers": {
+            "PERSPECTIVE_GENERATED_ID_12": {
+                "plugin": "Heatmap",
+                "plugin_config": {},
+                "settings": true,
+                "title": "Traffic Heatmap by Day and Hour",
+                "group_by": ["Day of Week"],
+                "split_by": ["Hour of Day"],
+                "columns": ["CRZ Entries"],
+                "filter": [],
+                "sort": [],
+                "expressions": {},
+                "aggregates": { "CRZ Entries": "sum" },
+                "master": false,
+                "table": "mta",
+                "linked": false
+            }
+        }
+    },
+    "Bar Chart - Traffic by Time Period": {
+        "sizes": [1],
+        "detail": {
+            "main": {
+                "type": "tab-area",
+                "widgets": ["PERSPECTIVE_GENERATED_ID_13"],
+                "currentIndex": 0
+            }
+        },
+        "mode": "globalFilters",
+        "viewers": {
+            "PERSPECTIVE_GENERATED_ID_13": {
+                "plugin": "Y Bar",
+                "plugin_config": {},
+                "settings": true,
+                "title": "Traffic by Time Period",
+                "group_by": ["Time Period"],
+                "split_by": ["Vehicle Class"],
+                "columns": ["CRZ Entries"],
+                "filter": [],
+                "sort": [],
+                "expressions": {},
+                "aggregates": { "CRZ Entries": "sum" },
+                "master": false,
+                "table": "mta",
+                "linked": false
+            }
+        }
+    },
+    "Scatter Plot - Traffic Correlation": {
+        "sizes": [1],
+        "detail": {
+            "main": {
+                "type": "tab-area",
+                "widgets": ["PERSPECTIVE_GENERATED_ID_14"],
+                "currentIndex": 0
+            }
+        },
+        "mode": "globalFilters",
+        "viewers": {
+            "PERSPECTIVE_GENERATED_ID_14": {
+                "plugin": "X/Y Scatter",
+                "plugin_config": {},
+                "settings": true,
+                "title": "Detection Group Traffic Correlation",
+                "group_by": ["Detection Group"],
+                "split_by": ["Vehicle Class"],
+                "columns": ["CRZ Entries", "Excluded Roadway Entries"],
+                "filter": [],
+                "sort": [],
+                "expressions": {},
+                "aggregates": {
+                    "CRZ Entries": "sum",
+                    "Excluded Roadway Entries": "sum"
+                },
+                "master": false,
+                "table": "mta",
+                "linked": false
+            }
+        }
+    },
+    "Treemap - Traffic Distribution": {
+        "sizes": [1],
+        "detail": {
+            "main": {
+                "type": "tab-area",
+                "widgets": ["PERSPECTIVE_GENERATED_ID_15"],
+                "currentIndex": 0
+            }
+        },
+        "mode": "globalFilters",
+        "viewers": {
+            "PERSPECTIVE_GENERATED_ID_15": {
+                "plugin": "Treemap",
+                "plugin_config": {},
+                "settings": true,
+                "title": "Traffic Distribution",
+                "group_by": ["Detection Group", "Vehicle Class"],
+                "split_by": [],
+                "columns": ["CRZ Entries"],
+                "filter": [],
+                "sort": [],
+                "expressions": {},
+                "aggregates": { "CRZ Entries": "sum" },
+                "master": false,
+                "table": "mta",
+                "linked": false
+            }
+        }
+    }
+} 
