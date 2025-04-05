@@ -53,11 +53,11 @@
             async function load() {
                 const el = document.getElementsByTagName("perspective-viewer")[0];
 
-                const evictions = get_data();
-                const layout_json = await fetch("layout_bargraph.json");
+                const data = get_data();
+                const layout_json = await fetch("layout_daily_trend.json");
                 const layout = await layout_json.json();
 
-                el.load(await evictions);
+                el.load(await data);
                 el.restore(layout);
             }
 
@@ -72,11 +72,24 @@
                 bottom: 0;
                 right: 0;
             }
+            
+            .title {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                z-index: 1000;
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-family: Arial, sans-serif;
+            }
         </style>
     </head>
 
     <body>
+        <div class="title">
+            <h2>Daily Traffic Trends by Hour</h2>
+        </div>
         <perspective-viewer editable> </perspective-viewer>
     </body>
-</html>
-
+</html> 

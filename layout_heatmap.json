@@ -1,0 +1,25 @@
+{
+    "plugin": "Y Bar",
+    "settings": true,
+    "theme": "Pro Light",
+    "group_by": ["Detection Region", "Vehicle Class"],
+    "split_by": [],
+    "columns": ["CRZ Entries"],
+    "aggregates": {
+        "CRZ Entries": "sum"
+    },
+    "sort": [["CRZ Entries", "desc"]],
+    "expressions": {
+        "Hour": "hour_of_day(\"Toll Hour\")",
+        "Date": "date(\"Toll Date\")"
+    },
+    "filter": [],
+    "plugin_config": {
+        "legend": {
+            "enabled": true
+        },
+        "zoom": {
+            "enabled": true
+        }
+    }
+} 

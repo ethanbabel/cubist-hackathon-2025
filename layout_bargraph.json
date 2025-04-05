@@ -1,0 +1,14 @@
+{
+    "plugin": "Y Bar",
+    "settings": true,
+    "theme": "Pro Light",
+    "group_by": ["Detection Region"],
+    "split_by": ["Vehicle Class"],
+    "columns": ["CRZ Entries"],
+    "aggregates": {
+        "CRZ Entries": "sum"
+    },
+    "sort": [["CRZ Entries", "desc"]],
+    "expressions": {},
+    "filter": []
+} 
