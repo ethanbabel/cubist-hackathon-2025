@@ -35,6 +35,31 @@
     th {
       background-color: #f2f2f2;
     }
+    .navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #2c2c2c; /* Darker background color */
+    display: flex; /* Retain flex layout */
+    justify-content: space-around; /* Space links evenly */
+    align-items: center; /* Center items vertically */
+    padding: 1rem; /* Adjust padding for better spacing */
+    z-index: 1000; /* Ensure it stays above other elements */
+}
+
+.navbar a {
+    color: #aaa; /* Light gray text color */
+    text-decoration: none; /* Remove underline from links */
+    font-weight: 500; /* Slightly bold text */
+    transition: color 0.2s ease; /* Smooth hover effect */
+}
+
+.navbar a:hover,
+.navbar a.active {
+    color: #fff; /* White text on hover or active state */
+    border-bottom: 2px solid #338dcd; /* Blue underline for emphasis */
+}
+
   </style>
 </head>
 <body>
@@ -77,5 +102,15 @@
   </table>
 
 <script src="toll_model.js"></script>
+<nav class="navbar">
+  <a href="index.html">Dashboard</a>
+  <a class="active" href="mapviz.html">Map Viz</a>
+  <a href="chatbot.html">AutoQuery</a>
+  <a href="#about">AutoChart</a>
+  <a href="#data">Smart Pricing</a>
+
+</nav>
+
+
 </body>
 </html>
