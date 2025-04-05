@@ -68,9 +68,33 @@ DARK_THEME = await fetch(
 LIGHT_THEME = await fetch(
     "https://cdn.jsdelivr.net/npm/@finos/perspective-workspace/dist/css/pro.css"
 ).then((x) => x.text());
-
-document.body.innerHTML = `
+const appContainer = document.getElementById('app-container');
+if (appContainer) {
+    appContainer.innerHTML = `
         <style>
+            /* Styles specific to the controls/workspace if needed */
+            #buttons {
+                padding: 5px;
+                background-color: var(--perspective- FFE UI--background, #f0f0f0); /* Use Perspective vars if possible */
+                border-bottom: 1px solid var(--perspective- FFE UI--border-color, #ccc);
+                flex-shrink: 0; /* Prevent buttons div from shrinking */
+                 z-index: 10; /* Ensure buttons above workspace content if overlapping needed */
+                 position: relative; /* Needed for z-index */
+            }
+            body.dark #buttons {
+                 background-color: var(--perspective- FFE UI--background, #444);
+                 border-bottom: 1px solid var(--perspective- FFE UI--border-color, #666);
+            }
+            #buttons a { /* Style the link inside buttons */
+                margin-left: 15px;
+                font-size: 0.9em;
+            }
+            #message { margin-right: 10px; font-style: italic; }
+            /* Adjust input style */
+            #name_input {
+                margin: 0 5px;
+                padding: 2px 4px;
+            }
         </style>
         <div id='buttons'>
             <span id="message"></span>
@@ -82,20 +106,14 @@ document.body.innerHTML = `
             <button id="theme" style="float: right">Light Theme</button>
             <button id="copy" style="float: right">Debug to Clipboard</button>
             <button id="reset" style="float: right">Reset LocalStorage</button>
-            <a href="https://github.com/MTA/congestion-pricing">MTA Congestion Pricing Data</a>
-            <a href="https://github.com/finos/perspective">Built With Perspective</a>
+            <a href="https://data.ny.gov/Transportation/MTA-Congestion-Relief-Zone-Vehicle-Entries-Beginni/t6yz-b64h/about_data" target="_blank" rel="noopener noreferrer">MTA Congestion Pricing Data</a>
         </div>
         <perspective-workspace id='workspace'></perspective-workspace>
     `.trim();
+} else {
+    console.error("#app-container not found in the DOM!");
+}
 
-toggle_theme();
-
-window.workspace.addEventListener(
-    "workspace-new-view",
-    ({ detail: { widget } }) => {
-        widget.viewer.setAttribute("theme", theme_style_node.dataset.theme);
-    }
-);
 
 window.workspace.addTable(
     "mta",
