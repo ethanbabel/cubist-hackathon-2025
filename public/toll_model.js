@@ -2,7 +2,7 @@ let map;
 
 window.onload = function () {
   // Load Google Maps API key dynamically
-  fetch("/api/maps_api_key")
+  fetch("http://localhost:5000/api/maps_api_key")
     .then((res) => res.json())
     .then((data) => {
       const script = document.createElement("script");
@@ -111,7 +111,7 @@ function initMap() {
 
 // Fetch and display toll data
 function fetchTollData() {
-  fetch("/api/realtime_tolls")
+  fetch("http://localhost:5000/api/realtime_tolls")
     .then((res) => res.json())
     .then((data) => {
       // Update global congestion display
@@ -174,7 +174,7 @@ function runModelTester() {
     value: parseFloat(el.value),
   }));
 
-  fetch("/api/test_model", {
+  fetch("http://localhost:5000/api/test_model", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
