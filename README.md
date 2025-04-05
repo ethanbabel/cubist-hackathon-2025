@@ -10,9 +10,9 @@ The model is designed to set the lowest tolls possible while maintaining congest
 
 **What Is the Congestion Score?**
 Congestion score is defined as follows:
-\begin{center}
-    hello
-\end{center}
+$$\begin{center}
+   congestion = 1 - \frac{\text{currentFlowRate}}{\text{freeFlowRate}}
+\end{center}$$
 	•	0.0 = completely free-flowing traffic
 	•	1.0 = total gridlock
 
