@@ -70,24 +70,25 @@ cd cubist-hackathon-2025
 
 2. Install dependencies
 For the backend (Vanna integration), run:
-
 pip install -r requirements.txt
 
-3. Start the core dashboard web server
+3. Run preprocess.py to ensure you have processed and created the latest .arrow locally
+
+4. Start the core dashboard web server
 Run the following command to start the local server:
 
 `python3 -m http.server`
 This will start the server at localhost:8000.
 
-4. Start the chatbot server
+5. Start the chatbot server
 In a new terminal, create a virtual environment and instal the requirements.txt in your tool of choice (we used python venv)
 Then, navigate to /ai_chat and run `python3 chat_server`
 
-5. Start the deep learning API server
+6. Start the deep learning API server
 In a new terminal, create a virtual environment and instal the requirements.txt in your tool of choice 
 Then, run `python3 python_scripts/app.py` from the base folder
 
-6. Start the autochart server
+7. Start the autochart server
 In a new terminal, create a virtual environment and install the requirements.txt in your tool of choice
 Then, run `python3 api/autochart_backend.py`
 
