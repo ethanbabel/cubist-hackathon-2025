@@ -72,12 +72,12 @@ cd cubist-hackathon-2025
 For the backend (Vanna integration), run:
 pip install -r requirements.txt
 
-3. Run preprocess.py to ensure you have processed and created the latest .arrow locally
+3. Run preprocess.py to ensure you have processed and created the latest .arrow file locally
 
 4. Start the core dashboard web server
 Run the following command to start the local server:
 
-`python3 -m http.server`
+`python3 -m http.server 8000`
 This will start the server at localhost:8000.
 
 5. Start the chatbot server
