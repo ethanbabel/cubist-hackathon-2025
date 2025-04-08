@@ -18,21 +18,23 @@ TIME_COLUMN_ORIGINAL = "Toll 10 Minute Block"
 ENTRIES_COLUMN_ORIGINAL = "CRZ Entries"
 EXCLUDED_COLUMN_ORIGINAL = "Excluded Roadway Entries" # Restore Excluded column
 LOCATION_COLUMN_ORIGINAL = "Detection Group"
+VEHICLE_CLASS_ORIGINAL = "Vehicle Class"  # Add Vehicle Class column
+TIME_PERIOD_ORIGINAL = "Time Period"      # Add Time Period column
 
 # Coordinate Mapping (Keep as is)
 locationToCoords = {
-    "Brooklyn Bridge": {"lat": 40.7061, "lon": -73.9969},
-    "Queens Midtown Tunnel": {"lat": 40.747696, "lon": -73.969075},
-    "Hugh L. Carey Tunnel": {"lat": 40.7040, "lon": -74.0133},
-    "Lincoln Tunnel": {"lat": 40.76328, "lon": -74.0108},
+    "Brooklyn Bridge": {"lat": 40.706100, "lon": -73.996900},
+    "Queens Midtown Tunnel": {"lat": 40.745733, "lon": -73.965187},
+    "Hugh L. Carey Tunnel": {"lat": 40.700000, "lon": -74.015150},
+    "Lincoln Tunnel": {"lat": 40.763280, "lon": -74.010800},
     "Holland Tunnel": {"lat": 40.727548, "lon": -74.021338},
-    "Queensboro Bridge": {"lat": 40.7566, "lon": -73.9545},
-    "Williamsburg Bridge": {"lat": 40.7138, "lon": -73.9718},
-    "Manhattan Bridge": {"lat": 40.7074, "lon": -73.9909},
+    "Queensboro Bridge": {"lat": 40.756795, "lon": -73.954370},
+    "Williamsburg Bridge": {"lat": 40.713800, "lon": -73.971800},
+    "Manhattan Bridge": {"lat": 40.707400, "lon": -73.990900},
     "West Side Highway at 60th St": {"lat": 40.773485, "lon": -73.992953},
     "West 60th St": {"lat": 40.771044, "lon": -73.987117},
     "FDR Drive at 60th St": {"lat": 40.759220, "lon": -73.958277},
-    "East 60th St": {"lat": 40.76345, "lon": -73.96915}
+    "East 60th St": {"lat": 40.763450, "lon": -73.969150}
 }
 
 def clean_col_name(name):
@@ -64,7 +66,9 @@ try:
     entries_col = clean_col_name(ENTRIES_COLUMN_ORIGINAL)
     excluded_col = clean_col_name(EXCLUDED_COLUMN_ORIGINAL) # Restore excluded
     location_col = clean_col_name(LOCATION_COLUMN_ORIGINAL)
-    print(f"Required columns (cleaned): {time_col}, {entries_col}, {excluded_col}, {location_col}")
+    vehicle_class_col = clean_col_name(VEHICLE_CLASS_ORIGINAL)
+    time_period_col = clean_col_name(TIME_PERIOD_ORIGINAL)
+    print(f"Required columns (cleaned): {time_col}, {entries_col}, {excluded_col}, {location_col}, {vehicle_class_col}, {time_period_col}")
 
     # --- ADD DateOnly Column Creation ---
     date_col_original = "Toll Date" # Assuming this column exists in the raw CSV
@@ -119,6 +123,13 @@ try:
     # --- Location Column ---
     print(f"Ensuring location column '{location_col}' is string...")
     df[location_col] = df[location_col].astype(str)
+
+    # --- Vehicle Class and Time Period Columns ---
+    print(f"Ensuring vehicle class column '{vehicle_class_col}' is string...")
+    df[vehicle_class_col] = df[vehicle_class_col].astype(str)
+    
+    print(f"Ensuring time period column '{time_period_col}' is string...")
+    df[time_period_col] = df[time_period_col].astype(str)
 
     # --- REMOVE SINGLE DAY FILTER ---
     # --- REMOVE GeoDataFrame Creation ---
