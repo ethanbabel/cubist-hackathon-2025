@@ -106,7 +106,7 @@ Explore the different graphs and charts (once implemented) for detailed traffic 
 ## Data Visualization
 
 ### Interactive Map 
-This feature displays a map of MTA zones with traffic density data shown at various time intervals. The map allows users to zoom in on specific areas and see how congestion levels change in real-time.
+This feature displays a map of MTA zones with traffic density data shown at various time intervals. The map allows users to zoom in on specific areas and see how congestion levels of the charged entry points change across time.
 
 Zones: Traffic data is segmented by zone.
 Time Interval: View congestion levels at different times of the day.
@@ -120,3 +120,8 @@ Historical Analysis: View how congestion has changed over days, weeks, or months
 Time Series Graphs to show traffic density over time.
 Bar/Column Charts for comparing congestion levels across multiple zones.
 Heatmaps to visualize traffic intensity within zones at specific times.
+
+
+
+
+![mapviz ss lol](mapviz.png)
